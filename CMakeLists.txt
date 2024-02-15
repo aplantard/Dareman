@@ -9,6 +9,16 @@ add_executable(Dareman WIN32 ${SOURCE_CODE})
 set_target_properties(Dareman PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/Binaries)
 set_property(TARGET Dareman PROPERTY CXX_STANDARD 17)
 
+if(CMAKE_BUILD_TYPE MATCHES "Debug")
+  set(
+    CMAKE_C_FLAGS
+    "${CMAKE_C_FLAGS} -Werror -fsanitize=undefined -fsanitize=address"
+  )
+  target_link_options(Dareman
+    BEFORE PUBLIC -fsanitize=undefined PUBLIC -fsanitize=address
+  )
+endif()
+
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 
 	set_target_properties(Dareman PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
