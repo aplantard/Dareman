@@ -42,10 +42,8 @@ struct Tile
 class Level
 {
 public:
-	Level(Renderer* aRenderer);
+	Level();
 	~Level();
-
-	static const Level& GetInstance() { return *sInstance; }
 
 	void LoadLevel(const char* aPath);
 	bool IsValid() const;
@@ -63,11 +61,10 @@ public:
 	int GetHeightPx() const { return mHeight * TILE_SIZE; }
 
 private:
-	void InitTileTemplates(Renderer* aRenderer);
+	void InitTileTemplates();
 	void LoadLevelFile(const char* aPath);
 	void LoadPickupFile(const char* aPath);
 
-	static Level* sInstance;
 
 	std::vector<std::vector<Tile>> mTiles;
 	std::map<std::string, Tile> mTileTemplates;

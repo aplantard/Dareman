@@ -2,26 +2,21 @@
 
 #include <map>
 #include <string>
-class Renderer;
 class Sprite;
 
 class SpriteManager
 {
 public:
-	static void CreateInstance(Renderer* aRenderer);
-	static void DeleteInstance();
-
-	static SpriteManager& GetInstance() { return *sInstance; }
-
-	Sprite* GetSprite(const char* aPath);
-
-private:
-	SpriteManager(Renderer* aRenderer);
+	SpriteManager();
 	~SpriteManager();
 	SpriteManager(const SpriteManager& anOther) = delete;
 
-	std::map<std::string, Sprite*> mSprites;
-	Renderer* mRenderer;
+	Sprite* CreateRGBSprite(int aWidth, int aHeight, int aRGBAColor);
+	Sprite* LoadSprite(const char* aPath);
+	Sprite* GetSprite(const char* aPath);
 
-	static SpriteManager* sInstance;
+private:
+
+	std::map<std::string, Sprite*> mSprites;
+
 };

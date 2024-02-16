@@ -6,15 +6,12 @@
 #include "Renderer.h"
 #include "Sprite.h"
 
-Level* Level::sInstance = nullptr;
-
-Level::Level(Renderer* aRenderer)
+Level::Level()
 	: mWidth(0)
 	, mHeight(0)
 	, mPickupCount(0)
 {
-	sInstance = this;
-	InitTileTemplates(aRenderer);
+	InitTileTemplates();
 	mSmallPickupSprite = aRenderer->LoadSprite("Data/Images/pickup_small.png");
 	mBigPickupSprite = aRenderer->LoadSprite("Data/Images/pickup_big.png");
 }
@@ -36,7 +33,7 @@ void Level::LoadLevel(const char* aPath)
 	LoadPickupFile((rootPath + "Pickups.txt").c_str());
 }
 
-void Level::InitTileTemplates(Renderer* aRenderer)
+void Level::InitTileTemplates()
 {
 	typedef std::pair<std::string, Tile> PairType;
 

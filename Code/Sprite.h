@@ -1,11 +1,11 @@
 #pragma once
 
 struct SDL_Texture;
-class Renderer;
+class SpriteManager;
 
 class Sprite
 {
-	friend class Renderer;
+	friend class SpriteManager;
 
 public:
 	~Sprite();
@@ -19,7 +19,7 @@ public:
 private:
 	Sprite(SDL_Texture* aTexture, int aWidth, int aHeight);
 
-	SDL_Texture* mTexture;
-	int mWidth;
-	int mHeight;
+	SDL_Texture* mTexture = nullptr;
+	int mWidth = 0;
+	int mHeight = 0;
 };

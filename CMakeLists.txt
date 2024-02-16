@@ -27,6 +27,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
 	target_include_directories(Dareman PRIVATE Libs/SDL2-2.0.7/include/)
 	target_include_directories(Dareman PRIVATE Libs/SDL2_ttf-2.0.14/include/)
 	target_include_directories(Dareman PRIVATE Libs/SDL2_image-2.0.2/include/)
+	target_include_directories(Dareman PRIVATE Code/)
 
 	# Support both 32 and 64 bit builds
 	if (${CMAKE_SIZEOF_VOID_P} MATCHES 8)

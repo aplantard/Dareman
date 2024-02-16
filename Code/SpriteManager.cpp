@@ -1,6 +1,7 @@
 #include "SpriteManager.h"
 
 #include <cassert>
+#include <SDL_image.h>
 
 #include "Dareman.h"
 #include "Renderer.h"
@@ -8,16 +9,35 @@
 
 SpriteManager* SpriteManager::sInstance = nullptr;
 
-void SpriteManager::CreateInstance(Renderer* aRenderer)
+void SpriteManager::CreateInstance()
 {
 	assert(sInstance == nullptr);
-	sInstance = new SpriteManager(aRenderer);
+	sInstance = new SpriteManager();
 }
 
 void SpriteManager::DeleteInstance()
 {
 	delete sInstance;
 	sInstance = nullptr;
+}
+
+Sprite* SpriteManager::LoadSprite(const char* aPath)
+{
+	Renderer* renderer = Renderer::GetInstance();
+	if (renderer)
+	{
+		SDL_Surface* surface = IMG_Load(aPath);
+		if (surface)
+		{
+			Sprite* sprite = new Sprite(renderer->CreateTextureFromSurface(surface), surface->w, surface->h);
+			SDL_FreeSurface(surface);
+			return sprite;
+		}
+		else
+			return nullptr;
+	}
+
+	return nullptr;
 }
 
 Sprite* SpriteManager::GetSprite(const char* aPath)
@@ -29,15 +49,34 @@ Sprite* SpriteManager::GetSprite(const char* aPath)
 	}
 	else
 	{
-		Sprite* sprite = mRenderer->LoadSprite(aPath);
+		Sprite* sprite = LoadSprite(aPath);
 		sprite->SetSize(TILE_SIZE, TILE_SIZE);
 		mSprites[aPath] = sprite;
 		return sprite;
 	}
 }
 
-SpriteManager::SpriteManager(Renderer* aRenderer)
-	: mRenderer(aRenderer)
+Sprite* SpriteManager::CreateRGBSprite(int aWidth, int aHeight, int aRGBAColor)
+{
+	Renderer* renderer = Renderer::GetInstance();
+	if (renderer)
+	{
+		SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, aWidth, aHeight, 32, SDL_PIXELFORMAT_ABGR32);
+		if (surface)
+		{
+			SDL_FillRect(surface, nullptr, aRGBAColor);
+			Sprite* sprite = new Sprite(renderer->CreateTextureFromSurface(surface), surface->w, surface->h);
+			SDL_FreeSurface(surface);
+			return sprite;
+		}
+		else
+			return nullptr;
+	}
+
+	return nullptr;
+}
+
+SpriteManager::SpriteManager()
 {
 }
 

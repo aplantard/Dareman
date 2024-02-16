@@ -37,6 +37,7 @@ public:
 	void UpdateSprite();
 
 	Direction mDirection;
+	Direction mWantedDirection;
 
 private:
 	Sprite* mCurrentSprite;

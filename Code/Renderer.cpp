@@ -1,59 +1,56 @@
-#include "Renderer.h"
-
-#include <SDL_image.h>
+#include <chrono>
+#include <cassert>
 #include <SDL_render.h>
+#include <GameEngine/GameEngine.h>
+#include <GameUI.h>
+#include <Level.h>
 
+#include "SpriteManager.h"
 #include "Sprite.h"
 
-Renderer::Renderer(SDL_Window* aWindow)
+#include "Renderer.h"
+
+Renderer::Renderer()
 	: mOffsetX(0)
 	, mOffsetY(0)
 {
 	// The renderer is intentionally set to a software renderer.
 	// Do not use hardware rendering as means of optimization in the context of the test.
-	mRenderer = SDL_CreateRenderer(aWindow, -1, SDL_RENDERER_SOFTWARE);
+	mWindow = SDL_CreateWindow("Dareman", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 800, 600, 0);
+	mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_SOFTWARE);
 
 	// Set clear color to black
 	SDL_SetRenderDrawColor(mRenderer, 0x00, 0x00, 0x00, 0x00);
+
+	mOpenSansFont = TTF_OpenFont("Data/Fonts/OpenSans-Regular.ttf", 16);
+	mPacmanFont = TTF_OpenFont("Data/Fonts/Pac-Font.ttf", 20);
 }
 
 Renderer::~Renderer()
 {
 	SDL_DestroyRenderer(mRenderer);
 	mRenderer = nullptr;
+
+	SDL_DestroyWindow(mWindow);
+	mWindow = nullptr;
 }
 
-Sprite* Renderer::LoadSprite(const char* aPath)
+SDL_Texture* Renderer::CreateTextureFromSurface(SDL_Surface* aSurface)
 {
-	SDL_Surface* surface = IMG_Load(aPath);
-	if (surface)
-	{
-		Sprite* sprite = new Sprite(SDL_CreateTextureFromSurface(mRenderer, surface), surface->w, surface->h);
-		SDL_FreeSurface(surface);
-		return sprite;
-	}
-	else
-		return nullptr;
-}
-
-Sprite* Renderer::CreateRGBSprite(int aWidth, int aHeight, int aRGBAColor)
-{
-	SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, aWidth, aHeight, 32, SDL_PIXELFORMAT_ABGR32);
-	if (surface)
-	{
-		SDL_FillRect(surface, nullptr, aRGBAColor);
-		Sprite* sprite = new Sprite(SDL_CreateTextureFromSurface(mRenderer, surface), surface->w, surface->h);
-		SDL_FreeSurface(surface);
-		return sprite;
-	}
-	else
-		return nullptr;
+	return SDL_CreateTextureFromSurface(mRenderer, aSurface);
 }
 
 void Renderer::SetOffset(int anOffsetX, int anOffsetY)
 {
 	mOffsetX = anOffsetX;
 	mOffsetY = anOffsetY;
+}
+
+void Renderer::SetWindowSize(int aSizeX, int aSizeY)
+{
+	// Adjust window to fit the level
+	SDL_SetWindowSize(mWindow, aSizeX, aSizeY);
+	SDL_SetWindowPosition(mWindow, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
 }
 
 void Renderer::DrawText(TTF_Font* aFont, const char* aText, int aRGBAColor, int aX, int aY)
@@ -91,6 +88,36 @@ void Renderer::DrawSprite(const Sprite* aSprite, int aX, int aY)
 	SDL_RenderCopy(mRenderer, aSprite->mTexture, nullptr, &destRect);
 }
 
+void Renderer::ShowDialog(TTF_Font* aTitleFont, TTF_Font* aTextFont, const char* aTitle, const char* aText)
+{
+	SpriteManager* spriteManager = SpriteManager::GetInstance();
+
+	if (spriteManager)
+	{
+		const int spacing = 20;
+
+		int titleWidth, titleHeight, textWidth, textHeight;
+		TTF_SizeText(aTitleFont, aTitle, &titleWidth, &titleHeight);
+		TTF_SizeText(aTitleFont, aTitle, &textWidth, &textHeight);
+
+		const int dialogWidth = spacing * 2 + std::max(titleWidth, textWidth);
+		const int dialogHeight = spacing * 3 + titleHeight + textHeight;
+
+		Sprite* background = spriteManager->CreateRGBSprite(dialogWidth, dialogHeight, BLACK);
+
+		int windowWidth, windowHeight;
+		SDL_GetWindowSize(mWindow, &windowWidth, &windowHeight);
+
+		const int dialogX = windowWidth / 2 - dialogWidth / 2;
+		const int dialogY = windowHeight / 2 - dialogHeight / 2;
+
+		DrawSprite(background, dialogX, dialogY);
+		DrawText(aTitleFont, aTitle, YELLOW, dialogX + dialogWidth / 2 - titleWidth / 2, dialogY + spacing);
+		DrawText(aTextFont, aText, YELLOW, dialogX + dialogWidth / 2 - textWidth / 2, dialogY + spacing * 2 + titleHeight);
+		EndFrame();
+	}
+}
+
 void Renderer::BeginFrame()
 {
 	SDL_RenderClear(mRenderer);
@@ -99,4 +126,23 @@ void Renderer::BeginFrame()
 void Renderer::EndFrame()
 {
 	SDL_RenderPresent(mRenderer);
+}
+
+void Renderer::Update(std::chrono::duration<double, std::milli> aDeltaTime)
+{
+	GameEngine* gameEngine = GameEngine::GetInstance();
+	GameUI* gameUI = gameEngine->GetGameUI();
+
+	BeginFrame();
+
+	SetOffset(0, gameUI->GetHeaderHeight());
+	gameEngine->GetLevel()->Render(this);
+
+	//Render entities
+
+	gameEngine->GetGameUI()->Render(this);
+
+
+	//EndFrame();
+
 }

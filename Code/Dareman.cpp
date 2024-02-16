@@ -12,6 +12,7 @@ Dareman::Dareman()
 	, mPosX(0)
 	, mPosY(0)
 	, mDirection(None)
+	, mWantedDirection(None)
 {
 }
 
