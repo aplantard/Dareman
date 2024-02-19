@@ -1,8 +1,6 @@
 #pragma once
 #include <chrono>
 
-#define TILE_SIZE 24
-
 class Renderer;
 class Sprite;
 

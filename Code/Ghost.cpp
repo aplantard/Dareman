@@ -1,7 +1,6 @@
 #include <cassert>
 #include <GameEngine/GameEngine.h>
 #include <GameEngine/SpriteManager.h>
-#include <GameEngine/Level.h>
 #include <GameEngine/Renderer.h>
  
 #include "Ghost.h"

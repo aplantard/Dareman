@@ -1,6 +1,7 @@
 #include <SDL_image.h>
 #include <GameEngine/GameEngine.h>
 #include <GameEngine/Renderer.h>
+#include <GameEngine/Level.h>
 
 #include "SpriteManager.h"
 

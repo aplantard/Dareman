@@ -1,5 +1,7 @@
 #include <GameEngine/GameEngine.h>
-#include "SpriteManager.h"
+#include <GameEngine/SpriteManager.h>
+#include <GameEngine/Level.h>
+#include <UI/GameUI.h>
 
 #include "Renderer.h"
 

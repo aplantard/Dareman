@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <GameEngine/Level.h>
 
 class Ghost : public GameActor
 {

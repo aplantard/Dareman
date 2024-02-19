@@ -1,5 +1,5 @@
 #include <GameEngine/Renderer.h>
-
+#include <GameEngine/Level.h>
 #include "GameActor.h"
 
 GameActor::GameActor(int aPosX, int aPosY)

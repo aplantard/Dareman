@@ -6,6 +6,8 @@
 
 #include "Dareman.h"
 
+#define TILE_SIZE 24
+
 class Sprite;
 class Renderer;
 class SpriteManager;
