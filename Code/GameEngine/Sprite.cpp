@@ -1,6 +1,6 @@
-#include "Sprite.h"
-
 #include <SDL_render.h>
+
+#include "Sprite.h"
 
 Sprite::Sprite(SDL_Texture* aSdlTexture, int aWidth, int aHeight)
 	: mTexture(aSdlTexture)

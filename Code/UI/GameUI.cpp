@@ -1,9 +1,7 @@
-#include <cassert>
 #include <SDL_ttf.h>
-#include <stdio.h>
-#include <algorithm>
-#include <Renderer.h>
-#include <Level.h>
+
+#include <GameEngine/Renderer.h>
+#include <GameEngine/Level.h>
 #include "GameEngine/GameEngine.h"
 #include "GameUI.h"
 
@@ -20,17 +18,17 @@ void GameUI::Render(Renderer* aRenderer) const
 	TTF_Font* openSansFont = aRenderer->GetOpenSansFont();
 
 	Level* level = GameEngine::GetInstance()->GetLevel();
+
+	char fpsLabel[32];
+	sprintf(fpsLabel, "%s %5.1f", mFpsLabel, (1000.f / mFpsCount));
+
 	int fpsLabelWidth, fpsLabelHeight;
-	TTF_SizeText(openSansFont, mFpsLabel, &fpsLabelWidth, &fpsLabelHeight);
+	TTF_SizeText(openSansFont, fpsLabel, &fpsLabelWidth, &fpsLabelHeight);
 
 	const int fpsLabelX = level->GetWidthPx() - spacing - fpsLabelWidth;
 
-
 	aRenderer->SetOffset(0, 0);
 	aRenderer->DrawText(pacmanFont, mTitleLabel, YELLOW, spacing, spacing);
-
-	char* fpsLabel = (char*)mFpsLabel;
-	sprintf(fpsLabel + strlen(fpsLabel), "%5.1f", 1000.f / mFpsCount);
 	aRenderer->DrawText(openSansFont, fpsLabel, YELLOW, fpsLabelX, spacing);
 
 }

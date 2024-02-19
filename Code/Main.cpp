@@ -9,14 +9,15 @@
 
 #include "Dareman.h"
 #include "Ghost.h"
-#include "Level.h"
-#include "Renderer.h"
-#include "Sprite.h"
-#include "SpriteManager.h"
-#include "GameStateMgr.h"
-#include "PlayerInputMgr.h"
-#include "GameUI.h"
+#include "GameEngine/Level.h"
+#include "GameEngine/Renderer.h"
+#include "GameEngine/Sprite.h"
+#include "GameEngine/SpriteManager.h"
+#include "GameEngine/GameStateMgr.h"
+#include "GameEngine/PlayerInputMgr.h"
 #include "GameEngine/GameEngine.h"
+#include "UI/GameUI.h"
+
 
 bool InitApp()
 {
@@ -54,16 +55,16 @@ int main(int argc, char* argv[])
 	GameEngine* gameEngine = GameEngine::GetInstance();
 	gameEngine->LoadLevel("Data/Level/");
 
-		if (!level->IsValid())
-		{
-			ShutdownApp();
-			return 1;
-		}
-	
-
 	GameStateMgr* gameStateMgr = gameEngine->GetGameStateMgr();
 	PlayerInputMgr* playerInputMgr = gameEngine->GetPlayerInputMgr();
 	Renderer* renderer = gameEngine->GetRenderer();
+	Level* level = gameEngine->GetLevel();
+
+	if (!gameEngine->GetLevel()->IsValid())
+	{
+		ShutdownApp();
+		return 1;
+	}
 
 	if (gameStateMgr == nullptr || playerInputMgr == nullptr || renderer == nullptr)
 	{
@@ -71,24 +72,8 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// Create game entities
-	Dareman* dareman = new Dareman();
-	const auto& daremanPosition = level->GetStartPosition(Character::Dareman);
-	dareman->SetPosition(daremanPosition.first * TILE_SIZE, daremanPosition.second * TILE_SIZE);
-
-	Ghost* ghosts[4];
-
-	ghosts[0] = new Ghost(Character::Blinky);
-	ghosts[1] = new Ghost(Character::Inky);
-	ghosts[2] = new Ghost(Character::Pinky);
-	ghosts[3] = new Ghost(Character::Clyde);
-
-	// Startup dialog
-	renderer->BeginFrame();
-	renderer->SetOffset(0, headerHeight);
-	level->Render(renderer);
-	ShowDialog(renderer, pacmanFont, openSansFont, "dareman", "Press a key to start");
-
+	// Display initial dialog
+	renderer->CreateDialog("dareman", "Press a key to start");
 
 	// Main application loop
 	auto now = std::chrono::high_resolution_clock::now();
@@ -111,28 +96,11 @@ int main(int argc, char* argv[])
 			deltaTime = deltaTime + sleepMs;
 		}
 
-		GameUI* gameUI = GameEngine::GetInstance()->GetGameUI();
-		renderer->SetOffset(0, gameUI->GetHeaderHeight());
-
-		dareman->Render(renderer);
-		for (int i = 0; i < 4; i++)
-		{
-			ghosts[i]->Render(renderer);
-		}
-
-		renderer->EndFrame();
+		gameEngine->GetGameUI()->SetFpsCount(deltaTime.count());
 	}
 
 
 	bool isError = gameStateMgr->GetCurrentGameState() == GameStateMgr::GameState::Error;
-
-	delete dareman;
-	dareman = nullptr;
-
-	for (Ghost* currentGhost : ghosts)
-	{
-		delete currentGhost;
-	}
 
 	ShutdownApp();
 	return isError ? 1 : 0;

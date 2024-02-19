@@ -1,19 +1,17 @@
-#include "Level.h"
-
 #include <cassert>
-#include <string>
-
+#include <GameEngine/GameEngine.h>
 #include "Renderer.h"
-#include "Sprite.h"
+#include "SpriteManager.h"
+#include "Dareman.h"
+#include "Ghost.h"
+
+#include "Level.h"
 
 Level::Level()
 	: mWidth(0)
 	, mHeight(0)
 	, mPickupCount(0)
 {
-	InitTileTemplates();
-	mSmallPickupSprite = aRenderer->LoadSprite("Data/Images/pickup_small.png");
-	mBigPickupSprite = aRenderer->LoadSprite("Data/Images/pickup_big.png");
 }
 
 Level::~Level()
@@ -26,6 +24,18 @@ Level::~Level()
 	delete mBigPickupSprite;
 }
 
+void Level::LoadTilesSprite() 
+{
+	SpriteManager* spriteManager = GameEngine::GetInstance()->GetSpriteManager();
+
+	if (spriteManager)
+	{
+		InitTileTemplates(spriteManager);
+		mSmallPickupSprite = spriteManager->LoadSprite("Data/Images/pickup_small.png");
+		mBigPickupSprite = spriteManager->LoadSprite("Data/Images/pickup_big.png");
+	}
+}
+
 void Level::LoadLevel(const char* aPath)
 {
 	std::string rootPath = aPath;
@@ -33,24 +43,24 @@ void Level::LoadLevel(const char* aPath)
 	LoadPickupFile((rootPath + "Pickups.txt").c_str());
 }
 
-void Level::InitTileTemplates()
+void Level::InitTileTemplates(SpriteManager* aSpriteManager)
 {
 	typedef std::pair<std::string, Tile> PairType;
 
-	mTileTemplates.emplace(PairType("c1", {aRenderer->LoadSprite("Data/Images/c1.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("c2", {aRenderer->LoadSprite("Data/Images/c2.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("c3", {aRenderer->LoadSprite("Data/Images/c3.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("c4", {aRenderer->LoadSprite("Data/Images/c4.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("w1", {aRenderer->LoadSprite("Data/Images/w1.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("w2", {aRenderer->LoadSprite("Data/Images/w2.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("w3", {aRenderer->LoadSprite("Data/Images/w3.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("w4", {aRenderer->LoadSprite("Data/Images/w4.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("d1", {aRenderer->LoadSprite("Data/Images/d1.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("d2", {aRenderer->LoadSprite("Data/Images/d2.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("d3", {aRenderer->LoadSprite("Data/Images/d3.png"), Collision::CollidesAll, Pickup::None}));
-	mTileTemplates.emplace(PairType("d4", {aRenderer->LoadSprite("Data/Images/d4.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("c1", {aSpriteManager->LoadSprite("Data/Images/c1.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("c2", {aSpriteManager->LoadSprite("Data/Images/c2.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("c3", {aSpriteManager->LoadSprite("Data/Images/c3.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("c4", {aSpriteManager->LoadSprite("Data/Images/c4.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("w1", {aSpriteManager->LoadSprite("Data/Images/w1.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("w2", {aSpriteManager->LoadSprite("Data/Images/w2.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("w3", {aSpriteManager->LoadSprite("Data/Images/w3.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("w4", {aSpriteManager->LoadSprite("Data/Images/w4.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("d1", {aSpriteManager->LoadSprite("Data/Images/d1.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("d2", {aSpriteManager->LoadSprite("Data/Images/d2.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("d3", {aSpriteManager->LoadSprite("Data/Images/d3.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("d4", {aSpriteManager->LoadSprite("Data/Images/d4.png"), Collision::CollidesAll, Pickup::None}));
 
-	mTileTemplates.emplace(PairType("ff", {aRenderer->LoadSprite("Data/Images/ff.png"), Collision::CollidesAll, Pickup::None}));
+	mTileTemplates.emplace(PairType("ff", {aSpriteManager->LoadSprite("Data/Images/ff.png"), Collision::CollidesAll, Pickup::None}));
 	mTileTemplates.emplace(PairType("f0", {nullptr, Collision::CollidesPlayer, Pickup::None}));
 	mTileTemplates.emplace(PairType("00", {nullptr, Collision::None, Pickup::None}));
 
@@ -88,8 +98,9 @@ void Level::LoadLevelFile(const char* aPath)
 
 void Level::LoadPickupFile(const char* aPath)
 {
+	GameEngine* gameEngine = GameEngine::GetInstance();
+
 	mPickupCount = 0;
-	mStartPositions.clear();
 
 	// The data is expected to be properly formatted and fitting the Level.txt
 	FILE* file = fopen(aPath, "r");
@@ -98,6 +109,8 @@ void Level::LoadPickupFile(const char* aPath)
 	char delimiter;
 	int col = 0;
 	int row = 0;
+
+	Dareman* dareman = nullptr;
 
 	while (fscanf(file, "%c%c", &pickupType, &delimiter) != EOF)
 	{
@@ -112,10 +125,18 @@ void Level::LoadPickupFile(const char* aPath)
 			mTiles[row][col].mPickup = Pickup::Big;
 			break;
 		case 'D':
+		{
+			dareman = new Dareman(col, row);
+			break;
+		}
 		case 'B':
 		case 'I':
 		case 'P':
-		case 'C': mStartPositions[(Character)pickupType] = std::make_pair(col, row); break;
+		case 'C': 
+		{
+			gameEngine->AddActor(new Ghost((Character)pickupType, col, row));
+
+		}
 		default: break;
 		}
 
@@ -132,6 +153,8 @@ void Level::LoadPickupFile(const char* aPath)
 
 	fclose(file);
 
+	gameEngine->AddActor(dareman);
+
 	// Check integrity of the level
 	mWidth = (int)mTiles[0].size();
 	mHeight = (int)mTiles.size();
@@ -139,7 +162,7 @@ void Level::LoadPickupFile(const char* aPath)
 
 bool Level::IsValid() const
 {
-	return mTiles.size() > 0 && mPickupCount > 0 && mStartPositions.size() == 5;
+	return mTiles.size() > 0 && mPickupCount > 0;
 }
 
 void Level::Render(Renderer* aRenderer) const

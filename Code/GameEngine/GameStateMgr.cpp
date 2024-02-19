@@ -1,7 +1,8 @@
+#include <cassert>
 #include <chrono>
 #include <GameEngine/GameEngine.h>
-#include "GameEngine/Renderer.h"
-#include "GameEngine/GameStateMgr.h"
+#include "Renderer.h"
+#include "GameStateMgr.h"
 
 GameStateMgr::GameStateMgr(GameState aInitialState)
 	: mCurrentState(aInitialState)
@@ -20,12 +21,6 @@ void GameStateMgr::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 {
 	switch (mCurrentState)
 	{
-		case GameStateMgr::Run:
-		{
-			
-
-			break;
-		}
 		case GameStateMgr::Win:
 		{
 			Renderer* renderer = GameEngine::GetInstance()->GetRenderer();

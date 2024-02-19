@@ -6,7 +6,6 @@ public:
 
 	enum GameState
 	{
-		Lobby,
 		Run,
 		Quit,
 		Error,

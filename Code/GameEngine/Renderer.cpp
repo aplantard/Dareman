@@ -1,12 +1,5 @@
-#include <chrono>
-#include <cassert>
-#include <SDL_render.h>
 #include <GameEngine/GameEngine.h>
-#include <GameUI.h>
-#include <Level.h>
-
 #include "SpriteManager.h"
-#include "Sprite.h"
 
 #include "Renderer.h"
 
@@ -80,42 +73,27 @@ void Renderer::DrawText(TTF_Font* aFont, const char* aText, int aRGBAColor, int 
 
 void Renderer::DrawSprite(const Sprite* aSprite, int aX, int aY)
 {
+	SpriteManager* spriteManager = GameEngine::GetInstance()->GetSpriteManager();
+
 	SDL_Rect destRect;
 	destRect.x = aX + mOffsetX;
 	destRect.y = aY + mOffsetY;
-	destRect.w = aSprite->mWidth;
-	destRect.h = aSprite->mHeight;
-	SDL_RenderCopy(mRenderer, aSprite->mTexture, nullptr, &destRect);
+	destRect.w = spriteManager->GetSpriteWidth(aSprite);
+	destRect.h = spriteManager->GetSpriteHeight(aSprite);
+	SDL_RenderCopy(mRenderer, spriteManager->GetSpriteTexture(aSprite), nullptr, &destRect);
 }
 
-void Renderer::ShowDialog(TTF_Font* aTitleFont, TTF_Font* aTextFont, const char* aTitle, const char* aText)
+void Renderer::CreateDialog(const char* aTitle, const char* aText)
 {
-	SpriteManager* spriteManager = SpriteManager::GetInstance();
+	mModals.push(new Modal(aTitle, aText));
+}
 
-	if (spriteManager)
-	{
-		const int spacing = 20;
+void Renderer::CloseDialog()
+{
+	Modal* modalToClose = mModals.front();
+	delete modalToClose;
 
-		int titleWidth, titleHeight, textWidth, textHeight;
-		TTF_SizeText(aTitleFont, aTitle, &titleWidth, &titleHeight);
-		TTF_SizeText(aTitleFont, aTitle, &textWidth, &textHeight);
-
-		const int dialogWidth = spacing * 2 + std::max(titleWidth, textWidth);
-		const int dialogHeight = spacing * 3 + titleHeight + textHeight;
-
-		Sprite* background = spriteManager->CreateRGBSprite(dialogWidth, dialogHeight, BLACK);
-
-		int windowWidth, windowHeight;
-		SDL_GetWindowSize(mWindow, &windowWidth, &windowHeight);
-
-		const int dialogX = windowWidth / 2 - dialogWidth / 2;
-		const int dialogY = windowHeight / 2 - dialogHeight / 2;
-
-		DrawSprite(background, dialogX, dialogY);
-		DrawText(aTitleFont, aTitle, YELLOW, dialogX + dialogWidth / 2 - titleWidth / 2, dialogY + spacing);
-		DrawText(aTextFont, aText, YELLOW, dialogX + dialogWidth / 2 - textWidth / 2, dialogY + spacing * 2 + titleHeight);
-		EndFrame();
-	}
+	mModals.pop();
 }
 
 void Renderer::BeginFrame()
@@ -138,11 +116,21 @@ void Renderer::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 	SetOffset(0, gameUI->GetHeaderHeight());
 	gameEngine->GetLevel()->Render(this);
 
-	//Render entities
+	if (ShouldPresentModal())
+	{
+		mModals.front()->Render(this);
+	}
+	else
+	{ 
+		// Render entities
+		for (auto gameActor : gameEngine->GetActors())
+		{
+			gameActor->Render(this);
+		}
+
+	}
 
 	gameEngine->GetGameUI()->Render(this);
 
-
-	//EndFrame();
-
+	EndFrame();
 }

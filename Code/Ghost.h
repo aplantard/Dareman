@@ -1,25 +1,16 @@
 #pragma once
 
-#include <utility>
+#include <chrono>
 
-#include "Dareman.h"
-#include "Level.h"
-
-class Renderer;
-
-class Ghost
+class Ghost : public GameActor
 {
 public:
-	Ghost(Character aCharacter);
+	Ghost(Character aCharacter, int aPosX = 0, int aPosY = 0);
 
 	void Render(Renderer* aRenderer) const;
+	virtual void Update(std::chrono::duration<double, std::milli> aDeltaTime) override;
 
 private:
-	void SetTilePosition(const std::pair<int, int>& aPosition);
-
 	Character mCharacter;
-	Sprite* mSprite;
 	Direction mDirection;
-	float mPosX;
-	float mPosY;
 };

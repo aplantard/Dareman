@@ -1,10 +1,8 @@
 #pragma once
 
-#define TILE_SIZE 24
 #define GAMEOBJECT_SPEED (TILE_SIZE * 6)
 
-class Renderer;
-class Sprite;
+#include "GameActor.h"
 
 enum Direction
 {
@@ -15,10 +13,10 @@ enum Direction
 	None
 };
 
-class Dareman
+class Dareman : public GameActor
 {
 public:
-	Dareman();
+	Dareman(int aPosX = 0, int aPosY = 0);
 	~Dareman();
 
 	void SetPosition(int aPosX, int aPosY);
@@ -31,16 +29,11 @@ public:
 	// if it is on a tile it moves to the next tile.
 	// Returns delta time remaining after the movement
 	float MoveToNextTile(float aDeltaTime);
-
-	virtual void Render(Renderer* aRenderer) const;
-
+	void SetWantedDirection(Direction aNewDirection);
 	void UpdateSprite();
-
-	Direction mDirection;
-	Direction mWantedDirection;
+	void Update(std::chrono::duration<double, std::milli> aDeltaTime) override;
 
 private:
-	Sprite* mCurrentSprite;
-	float mPosX;
-	float mPosY;
+	Direction mWantedDirection;
+	Direction mDirection;
 };

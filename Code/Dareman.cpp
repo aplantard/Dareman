@@ -1,19 +1,17 @@
+#include <cassert>
+#include <GameEngine/GameEngine.h>
+#include <GameEngine/SpriteManager.h>
+#include <GameEngine/Level.h>
+
 #include "Dareman.h"
 
-#include <cassert>
-
-#include "Level.h"
-#include "Renderer.h"
-#include "Sprite.h"
-#include "SpriteManager.h"
-
-Dareman::Dareman()
-	: mCurrentSprite(SpriteManager::GetInstance().GetSprite("Data/Images/pac_r2.png"))
-	, mPosX(0)
-	, mPosY(0)
-	, mDirection(None)
-	, mWantedDirection(None)
+Dareman::Dareman(int aPosX, int aPosY)
+	: mWantedDirection(None)
+	, GameActor(aPosX, aPosY)
 {
+	mDirection = Up;
+
+	mSprite = GameEngine::GetInstance()->GetSpriteManager()->GetSprite("Data/Images/pac_r2.png");
 }
 
 Dareman::~Dareman() {}
@@ -27,7 +25,7 @@ void Dareman::SetPosition(int aPosX, int aPosY)
 bool Dareman::CanMove(Direction aDirection) const
 {
 	assert(IsOnTile());
-	return Level::GetInstance().GetNextTile((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, aDirection).mCollision == Collision::None;
+	return GameEngine::GetInstance()->GetLevel()->GetNextTile((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, aDirection).mCollision == Collision::None;
 }
 
 bool Dareman::IsOnTile() const
@@ -119,18 +117,59 @@ float Dareman::MoveToNextTile(float aDeltaTime)
 	return aDeltaTime;
 }
 
-void Dareman::Render(Renderer* aRenderer) const
+void Dareman::SetWantedDirection(Direction aNewDirection) 
 {
-	aRenderer->DrawSprite(mCurrentSprite, (int)mPosX, (int)mPosY);
+	mWantedDirection = aNewDirection;
 }
+
 
 void Dareman::UpdateSprite()
 {
-	switch (mDirection)
+	SpriteManager* spriteManager = GameEngine::GetInstance()->GetSpriteManager();
+	if (spriteManager)
 	{
-	case Up: mCurrentSprite = SpriteManager::GetInstance().GetSprite("Data/Images/pac_u2.png"); break;
-	case Down: mCurrentSprite = SpriteManager::GetInstance().GetSprite("Data/Images/pac_d2.png"); break;
-	case Left: mCurrentSprite = SpriteManager::GetInstance().GetSprite("Data/Images/pac_l2.png"); break;
-	case Right: mCurrentSprite = SpriteManager::GetInstance().GetSprite("Data/Images/pac_r2.png"); break;
+		switch (mDirection)
+		{
+		case Up: mSprite = spriteManager->GetSprite("Data/Images/pac_u2.png"); break;
+		case Down: mSprite = spriteManager->GetSprite("Data/Images/pac_d2.png"); break;
+		case Left: mSprite = spriteManager->GetSprite("Data/Images/pac_l2.png"); break;
+		case Right: mSprite = spriteManager->GetSprite("Data/Images/pac_r2.png"); break;
+		}
+	}
+}
+
+void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime) 
+{
+	const float deltaSeconds = float(aDeltaTime.count()) / 1000.f;
+
+	if (mDirection == None)
+	{
+		mDirection = mWantedDirection;
+	}
+
+	float remaining = deltaSeconds;
+	while (remaining > 0.f && mDirection != None)
+	{
+		if (IsOnTile())
+		{
+			if (mWantedDirection != None && CanMove(mWantedDirection))
+			{
+				mDirection = mWantedDirection;
+				UpdateSprite();
+			}
+
+			if (CanMove(mDirection))
+			{
+				remaining = MoveToNextTile(remaining);
+			}
+			else
+			{
+				mDirection = None; // Stop movement and exit loop
+			}
+		}
+		else
+		{
+			remaining = MoveToNextTile(remaining);
+		}
 	}
 }

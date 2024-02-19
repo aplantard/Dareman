@@ -8,6 +8,7 @@
 
 class Sprite;
 class Renderer;
+class SpriteManager;
 
 enum class Collision : char
 {
@@ -45,6 +46,7 @@ public:
 	Level();
 	~Level();
 
+	void LoadTilesSprite();
 	void LoadLevel(const char* aPath);
 	bool IsValid() const;
 
@@ -53,7 +55,6 @@ public:
 	const Tile& GetTile(int aCol, int aRow) const;
 	const Tile& GetNextTile(int aCol, int aRow, Direction aDirection) const;
 	int GetPickupCount() const { return mPickupCount; }
-	const std::pair<int, int>& GetStartPosition(Character aCharacter) const { return mStartPositions.at(aCharacter); }
 
 	std::vector<Direction> ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
 
@@ -61,14 +62,13 @@ public:
 	int GetHeightPx() const { return mHeight * TILE_SIZE; }
 
 private:
-	void InitTileTemplates();
+	void InitTileTemplates(SpriteManager* aSpriteManager);
 	void LoadLevelFile(const char* aPath);
 	void LoadPickupFile(const char* aPath);
 
 
 	std::vector<std::vector<Tile>> mTiles;
 	std::map<std::string, Tile> mTileTemplates;
-	std::map<Character, std::pair<int, int>> mStartPositions;
 	Sprite* mSmallPickupSprite;
 	Sprite* mBigPickupSprite;
 	int mWidth;

@@ -1,29 +1,25 @@
+#include <SDL_image.h>
+#include <GameEngine/GameEngine.h>
+#include <GameEngine/Renderer.h>
+
 #include "SpriteManager.h"
 
-#include <cassert>
-#include <SDL_image.h>
+SpriteManager::SpriteManager() {}
 
-#include "Dareman.h"
-#include "Renderer.h"
-#include "Sprite.h"
-
-SpriteManager* SpriteManager::sInstance = nullptr;
-
-void SpriteManager::CreateInstance()
+SpriteManager::~SpriteManager()
 {
-	assert(sInstance == nullptr);
-	sInstance = new SpriteManager();
-}
+	// Free all the sprites
+	for (auto& it : mSprites)
+	{
+		delete it.second;
+	}
 
-void SpriteManager::DeleteInstance()
-{
-	delete sInstance;
-	sInstance = nullptr;
+	mSprites.clear();
 }
 
 Sprite* SpriteManager::LoadSprite(const char* aPath)
 {
-	Renderer* renderer = Renderer::GetInstance();
+	Renderer* renderer = GameEngine::GetInstance()->GetRenderer();
 	if (renderer)
 	{
 		SDL_Surface* surface = IMG_Load(aPath);
@@ -56,9 +52,11 @@ Sprite* SpriteManager::GetSprite(const char* aPath)
 	}
 }
 
+
+
 Sprite* SpriteManager::CreateRGBSprite(int aWidth, int aHeight, int aRGBAColor)
 {
-	Renderer* renderer = Renderer::GetInstance();
+	Renderer* renderer = GameEngine::GetInstance()->GetRenderer();
 	if (renderer)
 	{
 		SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, aWidth, aHeight, 32, SDL_PIXELFORMAT_ABGR32);
@@ -74,19 +72,4 @@ Sprite* SpriteManager::CreateRGBSprite(int aWidth, int aHeight, int aRGBAColor)
 	}
 
 	return nullptr;
-}
-
-SpriteManager::SpriteManager()
-{
-}
-
-SpriteManager::~SpriteManager()
-{
-	// Free all the sprites
-	for (auto& it : mSprites)
-	{
-		delete it.second;
-	}
-
-	mSprites.clear();
 }

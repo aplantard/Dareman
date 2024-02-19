@@ -10,6 +10,7 @@ public:
 	void Render(Renderer* aRenderer) const;
 	void CalculateHeaderHeight(Renderer* aRenderer);
 	inline int GetHeaderHeight() { return mHeaderHeight; };
+	inline void SetFpsCount(float aNewFpsValue) { mFpsCount = aNewFpsValue; };
 
 private:
 

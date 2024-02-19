@@ -1,11 +1,11 @@
 #include <cassert>
 #include <chrono>
-#include <PlayerInputMgr.h>
-#include <Renderer.h>
-#include <SpriteManager.h>
-#include <GameStateMgr.h>
-#include <Level.h>
-#include <GameUI.h>
+#include <GameEngine/PlayerInputMgr.h>
+#include <GameEngine/Renderer.h>
+#include <GameEngine/SpriteManager.h>
+#include <GameEngine/GameStateMgr.h>
+#include <GameEngine/Level.h>
+#include <UI/GameUI.h>
 #include "GameEngine.h"
 
 GameEngine* GameEngine::sInstance = nullptr;
@@ -23,8 +23,15 @@ void GameEngine::DeleteInstance()
 	sInstance = nullptr;
 }
 
+Dareman* GameEngine::GetDareman()
+{
+	Dareman* dareman = (Dareman*)mGameActors[mGameActors.size() - 1];
+	return dareman;
+}
+
 void GameEngine::LoadLevel(const char* aPath)
 {
+	mLevel->LoadTilesSprite();
 	mLevel->LoadLevel(aPath);
 
 	if (!mLevel->IsValid())
@@ -42,18 +49,32 @@ void GameEngine::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 	mPlayerInputMgr->Update(aDeltaTime);
 	mGameStateMgr->Update(aDeltaTime);
 	mRenderer->Update(aDeltaTime);
+
+	if (mGameStateMgr->GetCurrentGameState() == GameStateMgr::GameState::Run && mRenderer->ShouldPresentModal() == false)
+	{
+		for (auto gameActor : mGameActors)
+		{
+			gameActor->Update(aDeltaTime);
+		}
+	}
 	
+}
+
+void GameEngine::AddActor(GameActor* aActorToAdd) 
+{
+	mGameActors.push_back(aActorToAdd);
 }
 
 // Here order of creation is important
 GameEngine::GameEngine()
 {
 	mRenderer = new Renderer();
-	mGameStateMgr = new GameStateMgr(GameStateMgr::GameState::Lobby);
+	mGameStateMgr = new GameStateMgr(GameStateMgr::GameState::Run);
 	mPlayerInputMgr = new PlayerInputMgr();
 	mSpriteManager = new SpriteManager();
 	mLevel = new Level();
 	mGameUI = new GameUI();
+	mGameActors.reserve(16);
 }
 
 GameEngine::~GameEngine()
@@ -75,4 +96,11 @@ GameEngine::~GameEngine()
 
 	delete mGameUI;
 	mGameUI = nullptr;
+
+	for (auto gameActor : mGameActors)
+	{
+		delete gameActor;
+	}
+
+	mGameActors.clear();
 }

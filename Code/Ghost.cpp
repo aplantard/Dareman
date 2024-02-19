@@ -1,16 +1,17 @@
+#include <cassert>
+#include <GameEngine/GameEngine.h>
+#include <GameEngine/SpriteManager.h>
+#include <GameEngine/Level.h>
+#include <GameEngine/Renderer.h>
+ 
 #include "Ghost.h"
 
-#include <cassert>
 
-#include "Renderer.h"
-#include "Sprite.h"
-#include "SpriteManager.h"
 
-Ghost::Ghost(Character aCharacter)
+Ghost::Ghost(Character aCharacter, int aPosX, int aPosY)
 	: mCharacter(aCharacter)
-	, mPosX(0)
-	, mPosY(0)
 	, mDirection(Up)
+	, GameActor(aPosX,aPosY)
 {
 	const char* spritePath = nullptr;
 	switch (aCharacter)
@@ -22,17 +23,14 @@ Ghost::Ghost(Character aCharacter)
 	default: assert(false && "This character is not a ghost");
 	}
 
-	mSprite = SpriteManager::GetInstance().GetSprite(spritePath);
-	SetTilePosition(Level::GetInstance().GetStartPosition(mCharacter));
-}
-
-void Ghost::SetTilePosition(const std::pair<int, int>& aPosition)
-{
-	mPosX = float(aPosition.first * TILE_SIZE);
-	mPosY = float(aPosition.second * TILE_SIZE);
+	mSprite = GameEngine::GetInstance()->GetSpriteManager()->GetSprite(spritePath);
 }
 
 void Ghost::Render(Renderer* aRenderer) const
 {
 	aRenderer->DrawSprite(mSprite, (int)mPosX, (int)mPosY);
+}
+
+void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime) 
+{
 }
