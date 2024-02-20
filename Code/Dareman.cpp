@@ -37,6 +37,8 @@ float Dareman::MoveToNextTile(float aDeltaTime)
 {
 	const float distanceMax = aDeltaTime * GAMEOBJECT_SPEED;
 
+	Level* level = GameEngine::GetInstance()->GetLevel();
+
 	// Move to next tile, or finish moving into tile in progress
 	switch (mDirection)
 	{
@@ -77,8 +79,22 @@ float Dareman::MoveToNextTile(float aDeltaTime)
 	break;
 	case Right:
 	{
-		const int nextTileX = ((int)mPosX + TILE_SIZE) / TILE_SIZE * TILE_SIZE;
-		const float distanceToNextTile = nextTileX - mPosX;
+		int levelWidth = level->GetWidthPx();
+
+		int nextTileX = ((int)mPosX + TILE_SIZE) / TILE_SIZE * TILE_SIZE;
+
+		if (nextTileX >= levelWidth)
+		{
+			nextTileX = 0;
+		}
+
+		float distanceToNextTile = nextTileX - mPosX;
+
+		if (distanceToNextTile < 0)
+		{
+			distanceToNextTile = (levelWidth - mPosX);
+		}
+
 		if (distanceMax > distanceToNextTile)
 		{
 			mPosX = (float)nextTileX;
@@ -87,17 +103,39 @@ float Dareman::MoveToNextTile(float aDeltaTime)
 		else
 		{
 			mPosX += distanceMax;
+
+			if (mPosX >= levelWidth)
+			{
+				mPosX = 0;
+			}
 			aDeltaTime -= distanceMax / GAMEOBJECT_SPEED;
 		}
 	}
 	break;
 	case Left:
 	{
+		int levelWidth = level->GetWidthPx();
 		int nextTileX = (int)mPosX / TILE_SIZE * TILE_SIZE;
-		if (nextTileX == (int)mPosX)
-			nextTileX = (int)mPosX - TILE_SIZE;
 
-		const float distanceToNextTile = mPosX - nextTileX;
+		if (nextTileX == (int)mPosX)
+		{
+			if (nextTileX <= 0)
+			{
+				nextTileX = (levelWidth - TILE_SIZE);
+			}
+			else
+			{
+				nextTileX = (int)mPosX - TILE_SIZE;
+			}
+		}
+
+
+		float distanceToNextTile = mPosX - nextTileX;
+
+		if (distanceToNextTile < 0)
+		{
+			distanceToNextTile = (levelWidth - std::abs(distanceToNextTile));
+		}
 
 		if (distanceMax > distanceToNextTile)
 		{
@@ -107,6 +145,12 @@ float Dareman::MoveToNextTile(float aDeltaTime)
 		else
 		{
 			mPosX -= distanceMax;
+
+			if (mPosX <= 0)
+			{
+				mPosX = levelWidth - mPosX;
+			}
+
 			aDeltaTime -= distanceMax / GAMEOBJECT_SPEED;
 		}
 	}

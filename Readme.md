@@ -47,4 +47,5 @@ Scripts and libraries are provided to build on Windows with Visual Studio but it
 - First update that I've done is role base. I wanted only one singleton which is the gameEngine and it will have all member necessary to run the game.
 - I wanted to have role specified component so I move LoadSprite and CreateSprite functions from Renderer to SpriteManager. I'm still not very happy with the big dependecy between renderer and SpriteManager due to SDL_Renderer.
 - I added a GameStateMgr to Manage appState.
+- I added the GameEngine which will be the singleton that can act as gameEngine.
 - Assuming you are using git to track your changes, package the test using the following command before sending it back: `git archive --format="zip" --output="dareman_yourname.zip" HEAD`

@@ -198,8 +198,29 @@ const Tile& Level::GetNextTile(int aCol, int aRow, Direction aDirection) const
 	{
 	case Up: return GetTile(aCol, aRow - 1);
 	case Down: return GetTile(aCol, aRow + 1);
-	case Right: return GetTile(aCol + 1, aRow);
-	case Left: return GetTile(aCol - 1, aRow);
+	case Right:
+	{
+		if (aRow == (mTiles.size()/2) - 1)
+		{
+			if (aCol == (mTiles[0].size() - 1))
+			{
+				return GetTile(0, aRow);
+			}
+		}
+		return GetTile(aCol + 1, aRow);
+	}
+	case Left:
+	{
+		if (aRow == (mTiles.size() / 2) - 1)
+		{
+			if (aCol == 0)
+			{
+				return GetTile(mTiles[0].size() - 1, aRow);
+			}
+		}
+
+		return GetTile(aCol - 1, aRow);
+	}
 	default:
 		assert(false); // This should not happen
 		return mTiles[0][0];
