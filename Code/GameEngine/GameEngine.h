@@ -50,6 +50,7 @@ private:
 	std::vector<GameActor*> mGameActors;
 
 	unsigned int mPlayerScore = 0;
+	unsigned int mNbGhostKilled = 0;
 
 	static GameEngine* sInstance;
 };

@@ -9,6 +9,7 @@
 struct SDL_Renderer;
 struct SDL_Window;
 class Sprite;
+class SpriteSheet;
 
 #define BLACK 0x000000FF
 #define YELLOW 0xFFFF00FF
@@ -33,6 +34,7 @@ public:
 
 	void DrawText(TTF_Font* aFont, const char* aText, int aRGBAColor, int aX, int aY);
 	void DrawSprite(const Sprite* aSprite, int aX, int aY);
+	void DrawSpriteFromSpriteSheet(const SpriteSheet* aSpriteSheet, int aX, int aY);
 
 	void CreateDialog(const char* aTitle, const char* aText);
 	void CloseDialog();

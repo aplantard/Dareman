@@ -1,6 +1,7 @@
 #include <GameEngine/GameEngine.h>
 #include <GameEngine/SpriteManager.h>
 #include <GameEngine/Level.h>
+#include <GameEngine/SpriteSheet.h>
 #include <UI/GameUI.h>
 
 #include "Renderer.h"
@@ -83,6 +84,18 @@ void Renderer::DrawSprite(const Sprite* aSprite, int aX, int aY)
 	destRect.w = spriteManager->GetSpriteWidth(aSprite);
 	destRect.h = spriteManager->GetSpriteHeight(aSprite);
 	SDL_RenderCopy(mRenderer, spriteManager->GetSpriteTexture(aSprite), nullptr, &destRect);
+}
+
+void Renderer::DrawSpriteFromSpriteSheet(const SpriteSheet* aSpriteSheet, int aX, int aY)
+{
+	SDL_Rect destRect;
+	destRect.x = aX + mOffsetX;
+	destRect.y = aY + mOffsetY;
+	destRect.w = TILE_SIZE;
+	destRect.h = TILE_SIZE;
+
+	SDL_Surface* windowSurface = SDL_GetWindowSurface(mWindow);
+	SDL_BlitScaled(aSpriteSheet->mImage, &aSpriteSheet->mClip, windowSurface, &destRect);
 }
 
 void Renderer::CreateDialog(const char* aTitle, const char* aText)

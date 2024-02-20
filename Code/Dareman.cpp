@@ -2,6 +2,8 @@
 #include <GameEngine/GameEngine.h>
 #include <GameEngine/SpriteManager.h>
 #include <GameEngine/Level.h>
+#include <GameEngine/SpriteSheet.h>
+#include <GameEngine/Renderer.h>
 
 #include "Dareman.h"
 
@@ -11,7 +13,8 @@ Dareman::Dareman(int aPosX, int aPosY)
 {
 	mDirection = None;
 
-	mSprite = GameEngine::GetInstance()->GetSpriteManager()->GetSprite("Data/Images/pac_r2.png");
+	mSpriteSheet = new SpriteSheet("Data/Spritesheet/pacman.png", 7, 3);
+	mSpriteSheet->SelectSprite(0, 2);
 }
 
 Dareman::~Dareman() {}
@@ -169,15 +172,68 @@ void Dareman::SetWantedDirection(Direction aNewDirection)
 
 void Dareman::UpdateSprite()
 {
-	SpriteManager* spriteManager = GameEngine::GetInstance()->GetSpriteManager();
-	if (spriteManager)
+	switch (mDirection)
 	{
-		switch (mDirection)
+		case Up: mSpriteSheet->SelectSprite(2, 2); break;
+		case Down: mSpriteSheet->SelectSprite(1, 0); break;
+		case Left: mSpriteSheet->SelectSprite(1, 1); break;
+		case Right: mSpriteSheet->SelectSprite(0, 2); break;
+	}
+}
+
+void Dareman::ToggleSprite() 
+{
+	SDL_Rect selection = mSpriteSheet->GetSelection();
+
+	switch (mDirection)
+	{
+		case Up:
 		{
-		case Up: mSprite = spriteManager->GetSprite("Data/Images/pac_u2.png"); break;
-		case Down: mSprite = spriteManager->GetSprite("Data/Images/pac_d2.png"); break;
-		case Left: mSprite = spriteManager->GetSprite("Data/Images/pac_l2.png"); break;
-		case Right: mSprite = spriteManager->GetSprite("Data/Images/pac_r2.png"); break;
+			if (selection.x/selection.w == 2)
+			{
+				mSpriteSheet->SelectSprite(1, 2);
+			}
+			else
+			{
+				mSpriteSheet->SelectSprite(2, 2);
+			}
+			break;
+		}
+		case Down:
+		{
+			if (selection.x / selection.w == 1)
+			{
+				mSpriteSheet->SelectSprite(0, 0);
+			}
+			else
+			{
+				mSpriteSheet->SelectSprite(1, 0);
+			}
+			break;
+		}
+		case Left:
+		{
+			if (selection.x / selection.w == 1)
+			{
+				mSpriteSheet->SelectSprite(0, 1);
+			}
+			else
+			{
+				mSpriteSheet->SelectSprite(1, 1);
+			}
+			break;
+		}
+		case Right:
+		{
+			if (selection.x / selection.w == 0)
+			{
+				mSpriteSheet->SelectSprite(2, 1);
+			}
+			else
+			{
+				mSpriteSheet->SelectSprite(0, 2);
+			}
+			break;
 		}
 	}
 }
@@ -188,10 +244,23 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 
 	if (mDirection == None)
 	{
-		mDirection = mWantedDirection;
-		UpdateSprite();
+		if (mWantedDirection != None && CanMove(mWantedDirection))
+		{
+			mDirection = mWantedDirection;
+			UpdateSprite();
+		}
 	}
 
+	// Compute Sprite animation, average calculation to change sprite when changing tile. (It doesn't need to be really accurate).
+	{
+		mDistanceMoved += (GAMEOBJECT_SPEED / TILE_SIZE) * deltaSeconds;
+
+		if ((int)mDistanceMoved >= 1)
+		{
+			ToggleSprite();
+			mDistanceMoved = 0;
+		}
+	}
 	float remaining = deltaSeconds;
 	while (remaining > 0.f && mDirection != None)
 	{
@@ -219,4 +288,9 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			remaining = MoveToNextTile(remaining);
 		}
 	}
+}
+
+void Dareman::Render(Renderer* aRenderer) const
+{
+	aRenderer->DrawSpriteFromSpriteSheet(mSpriteSheet, mPosX, mPosY);
 }

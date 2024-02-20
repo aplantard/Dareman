@@ -49,4 +49,5 @@ Scripts and libraries are provided to build on Windows with Visual Studio but it
 - I added a GameStateMgr to Manage appState.
 - I added the GameEngine which will be the singleton that can act as gameEngine.
 - I added the corridor teleportation gameplay.
+- I used spritesheet for dareman animation. And I based animation on dareman speed not on actual level.
 - Assuming you are using git to track your changes, package the test using the following command before sending it back: `git archive --format="zip" --output="dareman_yourname.zip" HEAD`

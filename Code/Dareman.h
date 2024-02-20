@@ -4,6 +4,8 @@
 
 #include "GameActor.h"
 
+class SpriteSheet;
+
 enum Direction
 {
 	Up,
@@ -31,9 +33,15 @@ public:
 	float MoveToNextTile(float aDeltaTime);
 	void SetWantedDirection(Direction aNewDirection);
 	void UpdateSprite();
+	void ToggleSprite();
 	void Update(std::chrono::duration<double, std::milli> aDeltaTime) override;
+	void Render(Renderer* aRenderer) const override;
 
 private:
 	Direction mWantedDirection;
 	Direction mDirection;
+
+	SpriteSheet* mSpriteSheet;
+
+	float mDistanceMoved = 0;
 };
