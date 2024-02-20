@@ -27,8 +27,13 @@ void PlayerInputMgr::Update(std::chrono::duration<double, std::milli> aDeltaTime
 				gameStateMgr->SetCurrentState(GameStateMgr::GameState::Quit);
 			}
 
-			if (renderer->ShouldPresentModal())
+			if (renderer->ShouldPresentModal() && gameStateMgr->GetCurrentGameState() == GameStateMgr::GameState::Run)
 			{
+				renderer->CloseDialog();
+			}
+			else if (renderer->ShouldPresentModal() && (gameStateMgr->GetCurrentGameState() == GameStateMgr::GameState::Win || gameStateMgr->GetCurrentGameState() == GameStateMgr::GameState::Loss))
+			{
+				gameEngine->RestartGame();
 				renderer->CloseDialog();
 			}
 			else if (gameStateMgr->GetCurrentGameState() == GameStateMgr::GameState::Run)

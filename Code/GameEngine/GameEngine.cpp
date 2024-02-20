@@ -38,6 +38,11 @@ void GameEngine::EatPickUp(int aCol, int aRow)
 		mPlayerScore += 10;
 		mLevel->RemovePickUp(aCol, aRow);
 	}
+	else if (currentTile.mPickup == Pickup::Big)
+	{
+		mPlayerScore += 50;
+		mLevel->RemovePickUp(aCol, aRow);
+	}
 }
 
 void GameEngine::LoadLevel(const char* aPath)
@@ -74,6 +79,19 @@ void GameEngine::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 void GameEngine::AddActor(GameActor* aActorToAdd) 
 {
 	mGameActors.push_back(aActorToAdd);
+}
+
+void GameEngine::RestartGame() 
+{
+	for (auto gameActor : mGameActors)
+	{
+		delete gameActor;
+	}
+
+	mGameActors.clear();
+	mPlayerScore = 0;
+	mLevel->LoadLevel("Data/Level/");
+	mGameStateMgr->SetCurrentState(GameStateMgr::GameState::Run);
 }
 
 // Here order of creation is important

@@ -57,7 +57,7 @@ public:
 	const Tile& GetTile(int aCol, int aRow) const;
 	const Tile& GetNextTile(int aCol, int aRow, Direction aDirection) const;
 	void RemovePickUp(int aCol, int aRow);
-	int GetPickupCount() const { return mPickupCount; }
+	inline int GetPickupCount() const { return mPickupCount; }
 
 	std::vector<Direction> ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
 

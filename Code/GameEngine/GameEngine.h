@@ -33,6 +33,7 @@ public:
 	void LoadLevel(const char* aPath);
 	void Update(std::chrono::duration<double, std::milli> aDeltaTime);
 	void AddActor(GameActor* aActorToAdd);
+	void RestartGame();
 
 private:
 	GameEngine();
