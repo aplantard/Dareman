@@ -29,6 +29,17 @@ Dareman* GameEngine::GetDareman()
 	return dareman;
 }
 
+void GameEngine::EatPickUp(int aCol, int aRow) 
+{
+	Tile currentTile = mLevel->GetTile(aCol, aRow);
+
+	if (currentTile.mPickup == Pickup::Small)
+	{
+		mPlayerScore += 10;
+		mLevel->RemovePickUp(aCol, aRow);
+	}
+}
+
 void GameEngine::LoadLevel(const char* aPath)
 {
 	mLevel->LoadTilesSprite();

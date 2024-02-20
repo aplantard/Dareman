@@ -18,5 +18,6 @@ private:
 	float mFpsCount = 0.f;
 	char mFpsLabel[15] = "FPS: ";
 	char mTitleLabel[15] = "dareman";
+	char mScroreLabel[15] = "Score: ";
 	
 };

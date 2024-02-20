@@ -9,7 +9,7 @@ Dareman::Dareman(int aPosX, int aPosY)
 	: mWantedDirection(None)
 	, GameActor(aPosX, aPosY)
 {
-	mDirection = Up;
+	mDirection = None;
 
 	mSprite = GameEngine::GetInstance()->GetSpriteManager()->GetSprite("Data/Images/pac_r2.png");
 }
@@ -148,7 +148,7 @@ float Dareman::MoveToNextTile(float aDeltaTime)
 
 			if (mPosX <= 0)
 			{
-				mPosX = levelWidth - mPosX;
+				mPosX = levelWidth - TILE_SIZE;
 			}
 
 			aDeltaTime -= distanceMax / GAMEOBJECT_SPEED;
@@ -189,6 +189,7 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 	if (mDirection == None)
 	{
 		mDirection = mWantedDirection;
+		UpdateSprite();
 	}
 
 	float remaining = deltaSeconds;
@@ -196,7 +197,9 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 	{
 		if (IsOnTile())
 		{
-			if (mWantedDirection != None && CanMove(mWantedDirection))
+			GameEngine::GetInstance()->EatPickUp((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE);
+
+			if ((mWantedDirection != None && mWantedDirection != mDirection) && CanMove(mWantedDirection))
 			{
 				mDirection = mWantedDirection;
 				UpdateSprite();

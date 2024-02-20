@@ -26,8 +26,10 @@ public:
 	inline PlayerInputMgr* GetPlayerInputMgr() { return mPlayerInputMgr; };
 	inline GameUI* GetGameUI() { return mGameUI; };
 	inline std::vector<GameActor*> GetActors() const { return mGameActors; };
+	inline unsigned int GetPlayerScore() const { return mPlayerScore; };
 	Dareman* GetDareman();
 	
+	void EatPickUp(int aCol, int aRow);
 	void LoadLevel(const char* aPath);
 	void Update(std::chrono::duration<double, std::milli> aDeltaTime);
 	void AddActor(GameActor* aActorToAdd);
@@ -45,6 +47,8 @@ private:
 	GameUI* mGameUI;
 
 	std::vector<GameActor*> mGameActors;
+
+	unsigned int mPlayerScore = 0;
 
 	static GameEngine* sInstance;
 };

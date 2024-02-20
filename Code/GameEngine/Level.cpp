@@ -189,6 +189,9 @@ void Level::Render(Renderer* aRenderer) const
 
 const Tile& Level::GetTile(int aCol, int aRow) const
 {
+	assert(aRow >= 0 && aRow < mTiles.size());
+	assert(aCol >= 0 && aCol < mTiles[aRow].size());
+
 	return mTiles[aRow][aCol];
 }
 
@@ -224,6 +227,15 @@ const Tile& Level::GetNextTile(int aCol, int aRow, Direction aDirection) const
 	default:
 		assert(false); // This should not happen
 		return mTiles[0][0];
+	}
+}
+
+void Level::RemovePickUp(int aCol, int aRow)
+{
+	if (mTiles[aRow][aCol].mPickup != Pickup::None)
+	{
+		mTiles[aRow][aCol].mPickup = Pickup::None;
+		mPickupCount--;
 	}
 }
 

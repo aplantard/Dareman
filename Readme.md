@@ -48,4 +48,5 @@ Scripts and libraries are provided to build on Windows with Visual Studio but it
 - I wanted to have role specified component so I move LoadSprite and CreateSprite functions from Renderer to SpriteManager. I'm still not very happy with the big dependecy between renderer and SpriteManager due to SDL_Renderer.
 - I added a GameStateMgr to Manage appState.
 - I added the GameEngine which will be the singleton that can act as gameEngine.
+- I added the corridor teleportation gameplay.
 - Assuming you are using git to track your changes, package the test using the following command before sending it back: `git archive --format="zip" --output="dareman_yourname.zip" HEAD`
