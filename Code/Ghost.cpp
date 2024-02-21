@@ -2,6 +2,7 @@
 #include <GameEngine/GameEngine.h>
 #include <GameEngine/Renderer.h>
 #include <GameEngine/SpriteSheet.h>
+#include <GameEngine/Level.h>
  
 #include "Ghost.h"
 
@@ -21,6 +22,8 @@ Ghost::Ghost(Character aCharacter, int aPosX, int aPosY)
 	case Character::Clyde: mSpriteSheet->SelectSprite(0, 4); break;
 	default: assert(false && "This character is not a ghost");
 	}
+
+	mDirection = Up;
 }
 
 Ghost::~Ghost()
@@ -38,28 +41,37 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 {
 	const float deltaSeconds = float(aDeltaTime.count()) / 1000.f;
 
-	if (mDirection == None)
-	{
-		GameEngine* gameEngine = GameEngine::GetInstance();
-		Level* level = gameEngine->GetLevel();
-		std::pair<float,float> daremanPos = gameEngine->GetDareman()->GetPosition();
-		mDirection = level->ComputeShortestPath(
-			(int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, (int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE)[0];
-	
-		//UpdateSprite();
-	}
-
 	float remaining = deltaSeconds;
-	while (remaining > 0.f && mDirection != None)
+	while (remaining > 0.f)
 	{
 		if (IsOnTile())
 		{
 			GameEngine* gameEngine = GameEngine::GetInstance();
 			Level* level = gameEngine->GetLevel();
 			std::pair<float, float> daremanPos = gameEngine->GetDareman()->GetPosition();
-			mDirection = level->ComputeShortestPath(
-				(int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, (int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE)[0];
-	
+
+			/* if (GetNumberOfPathAvailableFromPos((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, mDirection) > 1)
+			{
+				mDirections = level->ComputeShortestPath((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, (int)daremanPos.first / TILE_SIZE,
+					(int)daremanPos.second / TILE_SIZE, mDirection);
+				mDirection = mDirections[0];
+			}
+			else
+			{*/
+				
+				if (mDirections.empty())
+				{
+					mDirections = level->ComputeShortestPath((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, (int)daremanPos.first / TILE_SIZE,
+						(int)daremanPos.second / TILE_SIZE, mDirection);
+				}
+				else
+				{
+					mDirections.erase(mDirections.begin());
+				}
+				mDirection = mDirections[0];
+
+			//}
+
 			remaining = MoveToNextTile(remaining);
 		}
 		else
@@ -67,4 +79,25 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			remaining = MoveToNextTile(remaining);
 		}
 	}
+}
+
+int Ghost::GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirectionFrom)
+{
+	Level* level = GameEngine::GetInstance()->GetLevel();
+	int numberOfPathAvailable = 0;
+
+	for (int i = 0; i < Direction::None; ++i)
+	{
+		Direction currentDir = static_cast<Direction>(i);
+
+		if (currentDir != level->GetOppositeDirection(aDirectionFrom))
+		{
+			if (level->GetNextTile(aCol, aRow, currentDir).mCollision != Collision::CollidesAll)
+			{
+				numberOfPathAvailable++;
+			}
+		}
+	}
+
+	return numberOfPathAvailable;
 }

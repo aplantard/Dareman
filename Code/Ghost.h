@@ -11,9 +11,10 @@ public:
 
 	void Render(Renderer* aRenderer) const;
 	virtual void Update(std::chrono::duration<double, std::milli> aDeltaTime) override;
+	int GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirectionFrom);
 
 private:
 	Character mCharacter;
-
+	std::vector<Direction> mDirections;
 	SpriteSheet* mSpriteSheet;
 };

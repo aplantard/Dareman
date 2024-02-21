@@ -52,6 +52,11 @@ struct Tile
 
 	int mCol = 0;
 	int mRow = 0;
+
+	bool operator==(const Tile& aOtherTile)
+	{ 
+		return mCol == aOtherTile.mCol && mRow == aOtherTile.mRow;
+	}
 };
 
 class Level
@@ -71,9 +76,10 @@ public:
 	void RemovePickUp(int aCol, int aRow);
 	inline int GetPickupCount() const { return mPickupCount; }
 
-	std::vector<Direction> ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
+	std::vector<Direction> ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom) const;
 	inline float GetManhattanDistance(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
 	Direction GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int aToRow) const;
+	Direction GetOppositeDirection(Direction aDirection) const;
 
 	int GetWidthPx() const { return mWidth * TILE_SIZE; }
 	int GetHeightPx() const { return mHeight * TILE_SIZE; }

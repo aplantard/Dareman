@@ -27,7 +27,7 @@ TileNode* FindNodeInList(std::vector<TileNode*>& aNodes, TileNode* aNode)
 {
 	for (TileNode* node : aNodes)
 	{
-		if (node->mTile->mCol == aNode->mTile->mCol && node->mTile->mRow == aNode->mTile->mRow)
+		if (node->mTile == aNode->mTile)
 		{
 			return node;
 		}
@@ -278,7 +278,7 @@ void Level::RemovePickUp(int aCol, int aRow)
 	}
 }
 
-std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const
+std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom) const
 {
 	std::vector<TileNode*> openList;
 	openList.reserve(128);
@@ -286,6 +286,7 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 	closedList.reserve(128);
 
 	TileNode* startTile = new TileNode(&GetTile(aStartCol, aStartRow));
+	TileNode* previousTile = new TileNode(&GetNextTile(aStartCol, aDestRow, GetOppositeDirection(aDirectionFrom)));
 	TileNode* destTile = new TileNode(&GetTile(aDestCol, aDestRow));
 	TileNode* currentTile = nullptr;
 
@@ -306,7 +307,7 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 			}
 		}
 
-		if (currentTile->mTile->mCol == aDestCol && currentTile->mTile->mRow == aDestRow)
+		if (currentTile->mTile == destTile->mTile)
 		{
 			break;
 		}
@@ -318,6 +319,11 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 		{
 			Direction currentDir = static_cast<Direction>(i);
 			TileNode* nextTile = new TileNode(&GetNextTile(currentTile->mTile->mCol, currentTile->mTile->mRow, currentDir));
+			if (currentTile->mTile == startTile->mTile && nextTile->mTile == previousTile->mTile)
+			{
+				continue;
+			}
+
 			if (nextTile->mTile->mCollision != Collision::CollidesAll && FindNodeInList(closedList, nextTile) == nullptr)
 			{
 				int totalCost = currentTile->mCost + 1;
@@ -351,6 +357,9 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 
 	delete destTile;
 	destTile = nullptr;
+
+	delete previousTile;
+	previousTile = nullptr;
 
 	for (auto it = openList.begin(); it != openList.end();)
 	{
@@ -395,4 +404,20 @@ Direction Level::GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int 
 	}
 
 	return Direction::None;
+}
+
+Direction Level::GetOppositeDirection(Direction aDirection) const
+{
+	switch (aDirection)
+	{
+		case Up: return Down;
+		case Down: return Up;
+		case Right: return Left;
+		case Left: return Right;
+		default:
+		{
+			assert(false); // This should not happen
+			return None;
+		}
+	}
 }
