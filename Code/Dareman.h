@@ -6,31 +6,13 @@
 
 class SpriteSheet;
 
-enum Direction
-{
-	Up,
-	Down,
-	Left,
-	Right,
-	None
-};
-
 class Dareman : public GameActor
 {
 public:
-	Dareman(int aPosX = 0, int aPosY = 0);
+	Dareman(int aCol = 0, int aRow = 0);
 	~Dareman();
-
-	void SetPosition(int aPosX, int aPosY);
-
+	
 	bool CanMove(Direction aDirection) const;
-	bool IsOnTile() const;
-
-	// Moves Dareman to the "next" tile.
-	// If Dareman is not already on one tile, it finishes its current movement,
-	// if it is on a tile it moves to the next tile.
-	// Returns delta time remaining after the movement
-	float MoveToNextTile(float aDeltaTime);
 	void SetWantedDirection(Direction aNewDirection);
 	void UpdateSprite();
 	void ToggleSprite();
@@ -39,8 +21,6 @@ public:
 
 private:
 	Direction mWantedDirection;
-	Direction mDirection;
-
 	SpriteSheet* mSpriteSheet;
 
 	float mDistanceMoved = 0;

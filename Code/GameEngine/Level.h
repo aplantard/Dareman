@@ -12,6 +12,15 @@ class Sprite;
 class Renderer;
 class SpriteManager;
 
+enum Direction
+{
+	Up,
+	Down,
+	Left,
+	Right,
+	None
+};
+
 enum class Collision : char
 {
 	None,
@@ -40,6 +49,9 @@ struct Tile
 	Sprite* mSprite = nullptr;
 	Collision mCollision = Collision::None;
 	Pickup mPickup = Pickup::None;
+
+	int mCol = 0;
+	int mRow = 0;
 };
 
 class Level
@@ -60,6 +72,8 @@ public:
 	inline int GetPickupCount() const { return mPickupCount; }
 
 	std::vector<Direction> ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
+	inline float GetManhattanDistance(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
+	Direction GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int aToRow) const;
 
 	int GetWidthPx() const { return mWidth * TILE_SIZE; }
 	int GetHeightPx() const { return mHeight * TILE_SIZE; }

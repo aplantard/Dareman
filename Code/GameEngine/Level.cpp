@@ -7,6 +7,35 @@
 
 #include "Level.h"
 
+// struct only usefull for a* algorithme
+struct TileNode
+{
+	TileNode(const Tile* aTile)
+		: mTile(aTile)
+	{
+	}
+
+	const Tile* mTile = nullptr;
+	TileNode* mParent = nullptr;
+	int mCost = 0;
+	int mHeuristic = 0;
+
+	inline int GetScore() const { return mCost + mHeuristic; };
+};
+
+TileNode* FindNodeInList(std::vector<TileNode*>& aNodes, TileNode* aNode)
+{
+	for (TileNode* node : aNodes)
+	{
+		if (node->mTile->mCol == aNode->mTile->mCol && node->mTile->mRow == aNode->mTile->mRow)
+		{
+			return node;
+		}
+	}
+	return nullptr;
+}
+
+
 Level::Level()
 	: mWidth(0)
 	, mHeight(0)
@@ -79,14 +108,24 @@ void Level::LoadLevelFile(const char* aPath)
 	// All lines should be the same length and consisting of series of two characters separated by spaces
 	FILE* file = fopen(aPath, "r");
 
+	int row = 0;
+	int col = 0;
+
 	char tileId[3] = "00";
 	char delimiter;
 	mTiles.emplace_back();
 	while (fscanf(file, "%2c%c", &tileId, &delimiter) != EOF)
 	{
 		mTiles.back().emplace_back(Tile(mTileTemplates[tileId]));
+		mTiles.back().back().mCol = col;
+		mTiles.back().back().mRow = row;
+		col++;
 		if (delimiter == '\n')
+		{
 			mTiles.emplace_back();
+			col = 0;
+			row++;
+		}
 	}
 
 	fclose(file);
@@ -241,8 +280,119 @@ void Level::RemovePickUp(int aCol, int aRow)
 
 std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const
 {
-	// TODO: Implement A* algorithm here
-	// The returned path should only contain the relevant direction changes.
-	// Note that ghosts cannot "turn back" and may only choose a direction when several choices are possible
-	return {Left};
+	std::vector<TileNode*> openList;
+	openList.reserve(128);
+	std::vector<TileNode*> closedList;
+	closedList.reserve(128);
+
+	TileNode* startTile = new TileNode(&GetTile(aStartCol, aStartRow));
+	TileNode* destTile = new TileNode(&GetTile(aDestCol, aDestRow));
+	TileNode* currentTile = nullptr;
+
+	openList.push_back(startTile);
+
+	while (openList.empty() == false)
+	{
+		auto current_it = openList.begin();
+		currentTile = *current_it;
+
+		for (auto it = openList.begin(); it != openList.end(); it++)
+		{
+			TileNode* tile = *it;
+			if (tile->GetScore() <= currentTile->GetScore())
+			{
+				currentTile = tile;
+				current_it = it;
+			}
+		}
+
+		if (currentTile->mTile->mCol == aDestCol && currentTile->mTile->mRow == aDestRow)
+		{
+			break;
+		}
+
+		closedList.push_back(currentTile);
+		openList.erase(current_it);
+			
+		for (int i = 0; i < Direction::None; ++i)
+		{
+			Direction currentDir = static_cast<Direction>(i);
+			TileNode* nextTile = new TileNode(&GetNextTile(currentTile->mTile->mCol, currentTile->mTile->mRow, currentDir));
+			if (nextTile->mTile->mCollision != Collision::CollidesAll && FindNodeInList(closedList, nextTile) == nullptr)
+			{
+				int totalCost = currentTile->mCost + 1;
+
+				TileNode* successor = FindNodeInList(openList, nextTile);
+
+				if (successor == nullptr)
+				{
+					successor = nextTile;
+					successor->mParent = currentTile;
+					successor->mCost = totalCost;
+					successor->mHeuristic = GetManhattanDistance(successor->mTile->mCol, successor->mTile->mRow, aDestCol, aDestRow);
+					openList.push_back(successor);
+				}
+				else if (totalCost < successor->mCost)
+				{
+					successor->mParent = currentTile;
+					successor->mCost = totalCost;
+				}
+			}
+		}
+	}
+
+	std::vector<Direction> toReturn;
+
+	while (currentTile->mParent != nullptr)
+	{
+		toReturn.push_back(GetDirectionToMove(currentTile->mParent->mTile->mCol, currentTile->mParent->mTile->mRow, currentTile->mTile->mCol, currentTile->mTile->mRow));
+		currentTile = currentTile->mParent;
+	}
+
+	delete destTile;
+	destTile = nullptr;
+
+	for (auto it = openList.begin(); it != openList.end();)
+	{
+		delete *it;
+		it = openList.erase(it);
+	}
+
+	for (auto it = closedList.begin(); it != closedList.end();)
+	{
+		delete *it;
+		it = closedList.erase(it);
+	}
+
+	return toReturn;
+}
+
+float Level::GetManhattanDistance(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const
+{
+	return abs(aDestCol - aStartCol) + abs(aDestRow - aStartRow);
+}
+
+Direction Level::GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int aToRow) const
+{
+	int diffCol = aToCol - aFromCol;
+	int diffRow = aToRow - aFromRow;
+
+	if (diffCol == 0 && diffRow == -1)
+	{
+		return Direction::Up;
+	}
+	else if (diffCol == 0 && diffRow == 1)
+	{
+		return Direction::Down;
+	}
+	else if (diffCol == 1 && diffRow == 0)
+	{
+		return Direction::Right;
+	}
+	else if (diffCol == -1 && diffRow == 0)
+	{
+		return Direction::Left;
+	}
+
+	return Direction::None;
 }
