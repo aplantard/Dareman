@@ -5,7 +5,10 @@
 #include <GameEngine/SpriteManager.h>
 #include <GameEngine/GameStateMgr.h>
 #include <GameEngine/Level.h>
+#include <GameEngine/CollisionMgr.h>
 #include <UI/GameUI.h>
+#include <Ghost.h>
+#include <GameActor.h>
 #include "GameEngine.h"
 
 GameEngine* GameEngine::sInstance = nullptr;
@@ -29,7 +32,12 @@ Dareman* GameEngine::GetDareman()
 	return dareman;
 }
 
-void GameEngine::EatPickUp(int aCol, int aRow) 
+void GameEngine::KillDareman()
+{
+	mGameStateMgr->SetCurrentState(GameStateMgr::GameState::DaremanDeath);
+}
+
+void GameEngine::EatPickUp(int aCol, int aRow)
 {
 	Tile currentTile = mLevel->GetTile(aCol, aRow);
 
@@ -42,7 +50,31 @@ void GameEngine::EatPickUp(int aCol, int aRow)
 	{
 		mPlayerScore += 50;
 		mLevel->RemovePickUp(aCol, aRow);
+
+		for (auto gameActor : mGameActors)
+		{
+			if (gameActor->IsDareman() == false)
+			{	
+				Ghost* currentGhost = (Ghost*)gameActor;
+				
+				if (currentGhost->GetState() != GhostState::Recovering)
+				{
+					currentGhost->SetState(GhostState::Fleeing);
+					currentGhost->SetSpeed(0.5f * DEFAULT_SPEED);
+					currentGhost->ToggleSprite();
+					currentGhost->ClearDirections();
+				}
+			}
+		}
+
+		mEnergizerDuration = 0;
 	}
+}
+
+void GameEngine::EatGhost()
+{
+	mNbGhostKilled++;
+	mPlayerScore += 200 * mNbGhostKilled;
 }
 
 void GameEngine::LoadLevel(const char* aPath)
@@ -72,8 +104,32 @@ void GameEngine::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 		{
 			gameActor->Update(aDeltaTime);
 		}
+		
+		mCollisionMgr->Update(aDeltaTime);
+
+		// Manager Energizer
+		{
+			if (mEnergizerDuration >= 0 && mEnergizerDuration < mEnergizerTotalDuration)
+			{
+				mEnergizerDuration += aDeltaTime.count();
+			}
+			else if (mEnergizerDuration >= 0)
+			{
+				for (auto gameActor : mGameActors)
+				{
+					if (gameActor->IsDareman() == false)
+					{
+						Ghost* currentGhost = (Ghost*)gameActor;
+						if (currentGhost->GetState() == GhostState::Fleeing)
+						{
+							currentGhost->SetState(GhostState::Chasing);
+							currentGhost->SetSpeed(DEFAULT_SPEED);
+						}
+					}
+				}
+			}
+		}
 	}
-	
 }
 
 void GameEngine::AddActor(GameActor* aActorToAdd) 
@@ -90,6 +146,7 @@ void GameEngine::RestartGame()
 
 	mGameActors.clear();
 	mPlayerScore = 0;
+	mNbGhostKilled = 0;
 	mLevel->LoadLevel("Data/Level/");
 	mGameStateMgr->SetCurrentState(GameStateMgr::GameState::Run);
 }
@@ -102,6 +159,7 @@ GameEngine::GameEngine()
 	mPlayerInputMgr = new PlayerInputMgr();
 	mSpriteManager = new SpriteManager();
 	mLevel = new Level();
+	mCollisionMgr = new CollisionMgr();
 	mGameUI = new GameUI();
 	mGameActors.reserve(16);
 }
@@ -125,6 +183,9 @@ GameEngine::~GameEngine()
 
 	delete mGameUI;
 	mGameUI = nullptr;
+
+	delete mCollisionMgr;
+	mCollisionMgr = nullptr;
 
 	for (auto gameActor : mGameActors)
 	{

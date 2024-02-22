@@ -2,7 +2,9 @@
 #include <GameEngine/SpriteManager.h>
 #include <GameEngine/Level.h>
 #include <GameEngine/SpriteSheet.h>
+#include <GameEngine/GameStateMgr.h>
 #include <UI/GameUI.h>
+#include <GameActor.h>
 
 #include "Renderer.h"
 
@@ -140,7 +142,17 @@ void Renderer::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 		// Render entities
 		for (auto gameActor : gameEngine->GetActors())
 		{
-			gameActor->Render(this);
+			if (gameEngine->GetGameStateMgr()->GetCurrentGameState() == GameStateMgr::GameState::DaremanDeath)
+			{
+				if (gameActor->IsDareman())
+				{
+					gameActor->Render(this);
+				}
+			}
+			else
+			{
+				gameActor->Render(this);
+			}
 		}
 
 	}

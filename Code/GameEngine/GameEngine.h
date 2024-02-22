@@ -10,6 +10,7 @@ class SpriteManager;
 class GameUI;
 class GameActor;
 class Dareman;
+class CollisionMgr;
 
 class GameEngine
 {
@@ -25,11 +26,15 @@ public:
 	inline SpriteManager* GetSpriteManager() { return mSpriteManager; };
 	inline PlayerInputMgr* GetPlayerInputMgr() { return mPlayerInputMgr; };
 	inline GameUI* GetGameUI() { return mGameUI; };
+	inline CollisionMgr* GetCollisionMgr() { return mCollisionMgr; };
 	inline std::vector<GameActor*> GetActors() const { return mGameActors; };
 	inline unsigned int GetPlayerScore() const { return mPlayerScore; };
 	Dareman* GetDareman();
+	inline bool IsWarningEnergizerEnd() const { return mEnergizerDuration >= mEnergizerEndWarningTime && mEnergizerDuration < mEnergizerTotalDuration; };
 	
+	void KillDareman();
 	void EatPickUp(int aCol, int aRow);
+	void EatGhost();
 	void LoadLevel(const char* aPath);
 	void Update(std::chrono::duration<double, std::milli> aDeltaTime);
 	void AddActor(GameActor* aActorToAdd);
@@ -46,11 +51,16 @@ private:
 	PlayerInputMgr* mPlayerInputMgr;
 	SpriteManager* mSpriteManager;
 	GameUI* mGameUI;
+	CollisionMgr* mCollisionMgr;
 
 	std::vector<GameActor*> mGameActors;
 
 	unsigned int mPlayerScore = 0;
 	unsigned int mNbGhostKilled = 0;
+
+	float mEnergizerTotalDuration = 10000;
+	float mEnergizerEndWarningTime = 7000;
+	float mEnergizerDuration = -1;
 
 	static GameEngine* sInstance;
 };

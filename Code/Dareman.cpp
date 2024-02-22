@@ -4,6 +4,7 @@
 #include <GameEngine/Level.h>
 #include <GameEngine/SpriteSheet.h>
 #include <GameEngine/Renderer.h>
+#include <GameEngine/GameStateMgr.h>
 
 #include "Dareman.h"
 
@@ -97,6 +98,20 @@ void Dareman::ToggleSprite()
 	}
 }
 
+void Dareman::DaremanDeathAnimation(std::chrono::duration<double, std::milli> aDeltaTime) 
+{
+	mDeathAnimationStepDuration += aDeltaTime.count();
+
+	if (mDeathAnimationStepDuration >= mDeathAnimationTotalDuration/9.f)
+	{
+		mDeathAnimationStepDuration = 0;
+		mDeathAnimationStepPassed++;
+
+		mSpriteSheet->SelectSprite(mDeathAnimationStepPassed%3, 3 + (mDeathAnimationStepPassed/3));
+	}
+
+}
+
 void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime) 
 {
 	const float deltaSeconds = float(aDeltaTime.count()) / 1000.f;
@@ -112,7 +127,7 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 
 	// Compute Sprite animation, average calculation to change sprite when changing tile. (It doesn't need to be really accurate).
 	{
-		mDistanceMoved += (GAMEOBJECT_SPEED / TILE_SIZE) * deltaSeconds;
+		mDistanceMoved += (mSpeed / TILE_SIZE) * deltaSeconds;
 
 		if ((int)mDistanceMoved >= 1)
 		{

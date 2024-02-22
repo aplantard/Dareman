@@ -3,6 +3,7 @@
 #include <GameEngine/Renderer.h>
 #include <GameEngine/Level.h>
 #include <GameEngine/GameStateMgr.h>
+#include <Dareman.h>
 
 GameStateMgr::GameStateMgr(GameState aInitialState)
 	: mCurrentState(aInitialState)
@@ -39,8 +40,18 @@ void GameStateMgr::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 		}
 		case GameStateMgr::Loss:
 		{
-			Renderer* renderer = GameEngine::GetInstance()->GetRenderer();
-			renderer->CreateDialog("you lose!", "Try again");
+			break;
+		}
+		case GameStateMgr::DaremanDeath:
+		{ 
+			Dareman* dareman = GameEngine::GetInstance()->GetDareman();
+			if (dareman->GetDaremanDeathAnimStep() >= 9)
+			{
+				mCurrentState = GameState::Loss;
+				Renderer* renderer = GameEngine::GetInstance()->GetRenderer();
+				renderer->CreateDialog("you lose!", "Try again");
+			}
+			dareman->DaremanDeathAnimation(aDeltaTime);
 			break;
 		}
 		default: break;

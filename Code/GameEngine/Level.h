@@ -4,9 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "Dareman.h"
-
-#define TILE_SIZE 24
+constexpr auto TILE_SIZE = 24;
 
 class Sprite;
 class Renderer;
@@ -76,7 +74,8 @@ public:
 	void RemovePickUp(int aCol, int aRow);
 	inline int GetPickupCount() const { return mPickupCount; }
 
-	std::vector<Direction> ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom) const;
+	std::vector<Direction> ComputePath(
+		int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom, bool aGoTowards) const;
 	inline float GetManhattanDistance(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
 	Direction GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int aToRow) const;
 	Direction GetOppositeDirection(Direction aDirection) const;

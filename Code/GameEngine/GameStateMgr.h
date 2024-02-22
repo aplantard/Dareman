@@ -11,6 +11,7 @@ public:
 		Error,
 		Win,
 		Loss,
+		DaremanDeath,
 		None
 	};
 

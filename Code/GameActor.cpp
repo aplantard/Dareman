@@ -1,13 +1,13 @@
 #include <cassert>
 #include <GameEngine/GameEngine.h>
 #include <GameEngine/Renderer.h>
-#include <GameEngine/Level.h>
 
 #include "GameActor.h"
 
 GameActor::GameActor(int aCol, int aRow)
 	: mSprite(nullptr)
 	, mDirection(None)
+	, mSpeed(TILE_SIZE * 6)
 {
 	SetTilePosition(aCol, aRow);
 }
@@ -32,7 +32,7 @@ bool GameActor::IsOnTile() const
 
 float GameActor::MoveToNextTile(float aDeltaTime)
 {
-	const float distanceMax = aDeltaTime * GAMEOBJECT_SPEED;
+	const float distanceMax = aDeltaTime * mSpeed;
 
 	Level* level = GameEngine::GetInstance()->GetLevel();
 
@@ -49,12 +49,12 @@ float GameActor::MoveToNextTile(float aDeltaTime)
 		if (distanceMax > distanceToNextTile)
 		{
 			mPosY = (float)nextTileY;
-			aDeltaTime -= distanceToNextTile / GAMEOBJECT_SPEED;
+			aDeltaTime -= distanceToNextTile / mSpeed;
 		}
 		else
 		{
 			mPosY -= distanceMax;
-			aDeltaTime -= distanceMax / GAMEOBJECT_SPEED;
+			aDeltaTime -= distanceMax / mSpeed;
 		}
 	}
 	break;
@@ -65,12 +65,12 @@ float GameActor::MoveToNextTile(float aDeltaTime)
 		if (distanceMax > distanceToNextTile)
 		{
 			mPosY = (float)nextTileY;
-			aDeltaTime -= distanceToNextTile / GAMEOBJECT_SPEED;
+			aDeltaTime -= distanceToNextTile / mSpeed;
 		}
 		else
 		{
 			mPosY += distanceMax;
-			aDeltaTime -= distanceMax / GAMEOBJECT_SPEED;
+			aDeltaTime -= distanceMax / mSpeed;
 		}
 	}
 	break;
@@ -95,7 +95,7 @@ float GameActor::MoveToNextTile(float aDeltaTime)
 		if (distanceMax > distanceToNextTile)
 		{
 			mPosX = (float)nextTileX;
-			aDeltaTime -= distanceToNextTile / GAMEOBJECT_SPEED;
+			aDeltaTime -= distanceToNextTile / mSpeed;
 		}
 		else
 		{
@@ -105,7 +105,7 @@ float GameActor::MoveToNextTile(float aDeltaTime)
 			{
 				mPosX = 0;
 			}
-			aDeltaTime -= distanceMax / GAMEOBJECT_SPEED;
+			aDeltaTime -= distanceMax / mSpeed;
 		}
 	}
 	break;
@@ -136,7 +136,7 @@ float GameActor::MoveToNextTile(float aDeltaTime)
 		if (distanceMax > distanceToNextTile)
 		{
 			mPosX = (float)nextTileX;
-			aDeltaTime -= distanceToNextTile / GAMEOBJECT_SPEED;
+			aDeltaTime -= distanceToNextTile / mSpeed;
 		}
 		else
 		{
@@ -147,7 +147,7 @@ float GameActor::MoveToNextTile(float aDeltaTime)
 				mPosX = levelWidth - TILE_SIZE;
 			}
 
-			aDeltaTime -= distanceMax / GAMEOBJECT_SPEED;
+			aDeltaTime -= distanceMax / mSpeed;
 		}
 	}
 	break;

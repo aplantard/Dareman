@@ -278,7 +278,8 @@ void Level::RemovePickUp(int aCol, int aRow)
 	}
 }
 
-std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom) const
+std::vector<Direction> Level::ComputePath(
+	int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom, bool aGoTowards) const
 {
 	std::vector<TileNode*> openList;
 	openList.reserve(128);
@@ -286,7 +287,11 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 	closedList.reserve(128);
 
 	TileNode* startTile = new TileNode(&GetTile(aStartCol, aStartRow));
-	TileNode* previousTile = new TileNode(&GetNextTile(aStartCol, aDestRow, GetOppositeDirection(aDirectionFrom)));
+	TileNode* previousTile = nullptr;
+	if (aDirectionFrom != Direction::None)
+	{
+		previousTile = new TileNode(&GetNextTile(aStartCol, aDestRow, GetOppositeDirection(aDirectionFrom)));
+	}
 	TileNode* destTile = new TileNode(&GetTile(aDestCol, aDestRow));
 	TileNode* currentTile = nullptr;
 
@@ -297,13 +302,28 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 		auto current_it = openList.begin();
 		currentTile = *current_it;
 
-		for (auto it = openList.begin(); it != openList.end(); it++)
+		if (aGoTowards)
 		{
-			TileNode* tile = *it;
-			if (tile->GetScore() <= currentTile->GetScore())
+			for (auto it = openList.begin(); it != openList.end(); it++)
 			{
-				currentTile = tile;
-				current_it = it;
+				TileNode* tile = *it;
+				if (tile->GetScore() <= currentTile->GetScore())
+				{
+					currentTile = tile;
+					current_it = it;
+				}
+			}
+		}
+		else
+		{
+			for (auto it = openList.begin(); it != openList.end(); it++)
+			{
+				TileNode* tile = *it;
+				if (tile->GetScore() > currentTile->GetScore())
+				{
+					currentTile = tile;
+					current_it = it;
+				}
 			}
 		}
 
@@ -319,8 +339,11 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 		{
 			Direction currentDir = static_cast<Direction>(i);
 			TileNode* nextTile = new TileNode(&GetNextTile(currentTile->mTile->mCol, currentTile->mTile->mRow, currentDir));
-			if (currentTile->mTile == startTile->mTile && nextTile->mTile == previousTile->mTile)
+			if (currentTile->mTile == startTile->mTile && previousTile != nullptr && nextTile->mTile == previousTile->mTile && aGoTowards)
 			{
+				delete nextTile;
+				nextTile = nullptr;
+
 				continue;
 			}
 
@@ -342,7 +365,20 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 				{
 					successor->mParent = currentTile;
 					successor->mCost = totalCost;
+
+					delete nextTile;
+					nextTile = nullptr;
 				}
+				else
+				{
+					delete nextTile;
+					nextTile = nullptr;
+				}
+			}
+			else
+			{
+				delete nextTile;
+				nextTile = nullptr;
 			}
 		}
 	}
@@ -355,11 +391,6 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 		currentTile = currentTile->mParent;
 	}
 
-	delete destTile;
-	destTile = nullptr;
-
-	delete previousTile;
-	previousTile = nullptr;
 
 	for (auto it = openList.begin(); it != openList.end();)
 	{
@@ -372,6 +403,12 @@ std::vector<Direction> Level::ComputeShortestPath(int aStartCol, int aStartRow, 
 		delete *it;
 		it = closedList.erase(it);
 	}
+
+	delete destTile;
+	destTile = nullptr;
+
+	delete previousTile;
+	previousTile = nullptr;
 
 	return toReturn;
 }
@@ -410,14 +447,14 @@ Direction Level::GetOppositeDirection(Direction aDirection) const
 {
 	switch (aDirection)
 	{
-		case Up: return Down;
-		case Down: return Up;
-		case Right: return Left;
-		case Left: return Right;
+		case Direction::Up: return Direction::Down;
+		case Direction::Down: return Direction::Up;
+		case Direction::Right: return Direction::Left;
+		case Direction::Left: return Direction::Right;
 		default:
 		{
 			assert(false); // This should not happen
-			return None;
+			return Direction::None;
 		}
 	}
 }
