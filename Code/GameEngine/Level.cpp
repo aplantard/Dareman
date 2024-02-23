@@ -168,9 +168,9 @@ void Level::LoadPickupFile(const char* aPath)
 			dareman = new Dareman(col, row);
 			break;
 		}
-		case 'B':
+		/* case 'B':
 		case 'I':
-		case 'P':
+		case 'P':*/
 		case 'C': 
 		{
 			gameEngine->AddActor(new Ghost((Character)pickupType, col, row));
@@ -228,6 +228,12 @@ void Level::Render(Renderer* aRenderer) const
 
 const Tile& Level::GetTile(int aCol, int aRow) const
 {
+
+
+	if ((aRow >= 0 && aRow < mTiles.size()) == false)
+	{
+		int i = 0;
+	}
 	assert(aRow >= 0 && aRow < mTiles.size());
 	assert(aCol >= 0 && aCol < mTiles[aRow].size());
 
@@ -279,7 +285,7 @@ void Level::RemovePickUp(int aCol, int aRow)
 }
 
 std::vector<Direction> Level::ComputePath(
-	int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom, bool aGoTowards) const
+	int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom) const
 {
 	std::vector<TileNode*> openList;
 	openList.reserve(128);
@@ -290,7 +296,7 @@ std::vector<Direction> Level::ComputePath(
 	TileNode* previousTile = nullptr;
 	if (aDirectionFrom != Direction::None)
 	{
-		previousTile = new TileNode(&GetNextTile(aStartCol, aDestRow, GetOppositeDirection(aDirectionFrom)));
+		previousTile = new TileNode(&GetNextTile(aStartCol, aStartRow, GetOppositeDirection(aDirectionFrom)));
 	}
 	TileNode* destTile = new TileNode(&GetTile(aDestCol, aDestRow));
 	TileNode* currentTile = nullptr;
@@ -302,30 +308,16 @@ std::vector<Direction> Level::ComputePath(
 		auto current_it = openList.begin();
 		currentTile = *current_it;
 
-		if (aGoTowards)
+		for (auto it = openList.begin(); it != openList.end(); it++)
 		{
-			for (auto it = openList.begin(); it != openList.end(); it++)
+			TileNode* tile = *it;
+			if (tile->GetScore() <= currentTile->GetScore())
 			{
-				TileNode* tile = *it;
-				if (tile->GetScore() <= currentTile->GetScore())
-				{
-					currentTile = tile;
-					current_it = it;
-				}
+				currentTile = tile;
+				current_it = it;
 			}
 		}
-		else
-		{
-			for (auto it = openList.begin(); it != openList.end(); it++)
-			{
-				TileNode* tile = *it;
-				if (tile->GetScore() > currentTile->GetScore())
-				{
-					currentTile = tile;
-					current_it = it;
-				}
-			}
-		}
+
 
 		if (currentTile->mTile == destTile->mTile)
 		{
@@ -339,7 +331,7 @@ std::vector<Direction> Level::ComputePath(
 		{
 			Direction currentDir = static_cast<Direction>(i);
 			TileNode* nextTile = new TileNode(&GetNextTile(currentTile->mTile->mCol, currentTile->mTile->mRow, currentDir));
-			if (currentTile->mTile == startTile->mTile && previousTile != nullptr && nextTile->mTile == previousTile->mTile && aGoTowards)
+			if (currentTile->mTile == startTile->mTile && previousTile != nullptr && nextTile->mTile == previousTile->mTile)
 			{
 				delete nextTile;
 				nextTile = nullptr;

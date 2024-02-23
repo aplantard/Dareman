@@ -75,7 +75,7 @@ public:
 	inline int GetPickupCount() const { return mPickupCount; }
 
 	std::vector<Direction> ComputePath(
-		int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom, bool aGoTowards) const;
+		int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom) const;
 	inline float GetManhattanDistance(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
 	Direction GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int aToRow) const;
 	Direction GetOppositeDirection(Direction aDirection) const;

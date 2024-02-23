@@ -7,6 +7,7 @@ enum GhostState
 {
 	Chasing,
 	Fleeing,
+	Scatter,
 	Recovering,
 };
 
@@ -33,6 +34,12 @@ private:
 	GhostState mState = GhostState::Chasing;
 	std::vector<Direction> mDirections;
 	SpriteSheet* mSpriteSheet;
-
+	Tile mTartgetTile;
+	Tile mDefaultTargetTile;
+	const float mScatterTotalDuration = 30000;
+	const float mChasingTotalDuration = 20000;
+	float mChangeStateDuration = 0;
 	float mDistanceMoved = 0;
+	int mScatterCount = 0;
+	const int mNbScatterMax = 4;
 };

@@ -135,7 +135,7 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			mDistanceMoved = 0;
 		}
 	}
-
+	bool arriveOnNextTile = false;
 	float remaining = deltaSeconds;
 	while (remaining > 0.f && mDirection != None)
 	{
@@ -151,7 +151,7 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 
 			if (CanMove(mDirection))
 			{
-				remaining = MoveToNextTile(remaining);
+				remaining = MoveToNextTile(remaining, arriveOnNextTile);
 			}
 			else
 			{
@@ -160,7 +160,7 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 		}
 		else
 		{
-			remaining = MoveToNextTile(remaining);
+			remaining = MoveToNextTile(remaining, arriveOnNextTile);
 		}
 	}
 }

@@ -14,20 +14,45 @@ constexpr auto PINKY_ROW = 12;
 
 Ghost::Ghost(Character aCharacter, int aPosX, int aPosY)
 	: mCharacter(aCharacter)
-	, mState(GhostState::Chasing)
+	, mState(GhostState::Scatter)
 	, GameActor(aPosX,aPosY)
 {
 	mSpriteSheet = new SpriteSheet("Data/Spritesheet/ghosts.png", 20, 2);
 	mSpriteSheet->SelectSprite(0, 2);
+	mScatterCount++;
+
+	Level* level = GameEngine::GetInstance()->GetLevel();
+
 	switch (aCharacter)
 	{
-	case Character::Blinky: mSpriteSheet->SelectSprite(0, BLINKY_ROW); break;
-	case Character::Inky: mSpriteSheet->SelectSprite(0, INKY_ROW); break;
-	case Character::Pinky: mSpriteSheet->SelectSprite(0, PINKY_ROW); break;
-	case Character::Clyde: mSpriteSheet->SelectSprite(0, CLYDE_ROW); break;
+	case Character::Blinky:
+	{
+		mDefaultTargetTile = level->GetTile(26, 1);
+		mSpriteSheet->SelectSprite(0, BLINKY_ROW);
+		break;
+	}
+	case Character::Inky:
+	{
+		mDefaultTargetTile = level->GetTile(26, 29);
+		mSpriteSheet->SelectSprite(0, INKY_ROW);
+		break;
+	}
+	case Character::Pinky:
+	{
+		mDefaultTargetTile = level->GetTile(1, 1);
+		mSpriteSheet->SelectSprite(0, PINKY_ROW);
+		break;
+	}
+	case Character::Clyde:
+	{
+		mDefaultTargetTile = level->GetTile(1, 29);
+		mSpriteSheet->SelectSprite(0, CLYDE_ROW);
+		break;
+	}
 	default: assert(false && "This character is not a ghost");
 	}
 
+	mTartgetTile = mDefaultTargetTile;
 	mDirection = Up;
 	mDirections.reserve(128);
 }
@@ -52,6 +77,50 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 {
 	const float deltaSeconds = float(aDeltaTime.count()) / 1000.f;
 
+	// Manage Scatter Chasing state switch 
+	{
+		if (mState == GhostState::Scatter || mState == GhostState::Chasing)
+		{
+			mChangeStateDuration += aDeltaTime.count();
+
+			if (mState == GhostState::Scatter)
+			{
+				float scatterDuration = mScatterTotalDuration;
+				if (mScatterCount > 2)
+				{
+					scatterDuration *= 1.4;
+				}
+
+				if (mChangeStateDuration >= scatterDuration)
+				{
+					GameEngine* gameEngine = GameEngine::GetInstance();
+					Level* level = gameEngine->GetLevel();
+
+					std::pair<float, float> daremanPos = gameEngine->GetDareman()->GetPosition();
+
+					mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+					mChangeStateDuration = 0;
+					mState = GhostState::Chasing;
+					mDirections.clear();
+				}
+			}
+			else if (mScatterCount <= mNbScatterMax)
+			{
+				if (mChangeStateDuration >= mChasingTotalDuration)
+				{
+					Level* level = GameEngine::GetInstance()->GetLevel();
+
+					mTartgetTile = mDefaultTargetTile;
+					mChangeStateDuration = 0;
+					mState = GhostState::Scatter;
+					mScatterCount++;
+					mDirections = mDirections = level->ComputePath(
+						(int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
+				}
+			}
+		}
+	}
+
 	// Compute Sprite animation, average calculation to change sprite when changing tile. (It doesn't need to be really accurate).
 	{
 		mDistanceMoved += (mSpeed / TILE_SIZE) * deltaSeconds;
@@ -62,7 +131,7 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			mDistanceMoved = 0;
 		}
 	}
-
+	bool arriveOnNextTile = false;
 	float remaining = deltaSeconds;
 	while (remaining > 0.f && mDirection != None)
 	{
@@ -71,67 +140,88 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			GameEngine* gameEngine = GameEngine::GetInstance();
 			Level* level = gameEngine->GetLevel();
 			std::pair<float, float> daremanPos = gameEngine->GetDareman()->GetPosition();
+			Tile currentTile = level->GetTile(mPosX / TILE_SIZE, mPosY / TILE_SIZE);
+			int numberOfdirectionAvailable = GetNumberOfPathAvailableFromPos(currentTile.mCol, currentTile.mRow, mDirection);
 
-			if (mState != GhostState:: Recovering && GetNumberOfPathAvailableFromPos((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, mDirection) > 1)
+			//Compute Next direction
 			{
-				if (mState == GhostState::Fleeing)
-				{
-					mDirections = level->ComputePath((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE,
-						(int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE, mDirection, false);
-				}
-				else if (mState == GhostState::Chasing)
-				{
-					mDirections = level->ComputePath((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, (int)daremanPos.first / TILE_SIZE,
-						(int)daremanPos.second / TILE_SIZE, mDirection, true);
-				}
-
-				if (mDirections.empty() == false)
-				{
-					mDirection = mDirections.back();
-					mDirections.pop_back();
-				}
-			}
-			else
-			{
-				if (mDirections.empty())
+				if ((mState == GhostState::Chasing || mState == GhostState::Fleeing) && numberOfdirectionAvailable > 1)
 				{
 					if (mState == GhostState::Fleeing)
 					{
-						mDirections = level->ComputePath((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, (int)daremanPos.first / TILE_SIZE,
-							(int)daremanPos.second / TILE_SIZE, mDirection, false);
+						float maxDistance = 0;
+						for (int i = 0; i < Direction::None; ++i)
+						{
+							Direction currentDir = static_cast<Direction>(i);
+							Tile nextTile = level->GetNextTile(currentTile.mCol, currentTile.mRow, currentDir);
+
+							if (level->GetManhattanDistance(
+									daremanPos.first / TILE_SIZE, daremanPos.second / TILE_SIZE, nextTile.mCol, nextTile.mRow)
+								> maxDistance)
+							{
+								mDirection = currentDir;
+							}
+						}
 					}
 					else if (mState == GhostState::Chasing)
 					{
-						mDirections = level->ComputePath((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, (int)daremanPos.first / TILE_SIZE,
-							(int)daremanPos.second / TILE_SIZE, mDirection, true);
-					}
-					else if (mState == GhostState::Recovering)
-					{
-						mDirections = level->ComputePath((int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, 13, 15, Direction::None, true);
+						mDirections = level->ComputePath(
+							(int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, mTartgetTile.mCol, mTartgetTile.mRow, mDirection);
 					}
 
 					if (mDirections.empty() == false)
 					{
 						mDirection = mDirections.back();
-						mDirections.pop_back();
 					}
 				}
 				else
 				{
-					mDirection = mDirections.back();
-					mDirections.pop_back();
+					if (mDirections.empty())
+					{
+						if (mState == GhostState::Fleeing)
+						{
+							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow,
+								(int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE, Direction::None);
+						}
+						else if (mState == GhostState::Chasing || mState == GhostState::Scatter)
+						{
+							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
+						}
+						else if (mState == GhostState::Recovering)
+						{
+							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow, 13, 15, Direction::None);
+						}
+
+						if (mDirections.empty() == false)
+						{
+							mDirection = mDirections.back();
+							mDirections.pop_back();
+						}
+					}
+					else
+					{
+						mDirection = mDirections.back();
+					}
 				}
+
 			}
 
 			if (mDirection != Direction::None && CanMove(mDirection))
 			{
-				remaining = MoveToNextTile(remaining);
+
+				remaining = MoveToNextTile(remaining, arriveOnNextTile);
 				UpdateSprite();
 			}
 		}
 		else
 		{
-			remaining = MoveToNextTile(remaining);
+			remaining = MoveToNextTile(remaining, arriveOnNextTile);
+		}
+
+		if (arriveOnNextTile)
+		{
+			mDirections.pop_back();
+			mDirection = mDirections.back();
 		}
 	}
 }
@@ -140,14 +230,20 @@ int Ghost::GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirect
 {
 	Level* level = GameEngine::GetInstance()->GetLevel();
 	int numberOfPathAvailable = 0;
+	Tile previousTile;
+
+	if (aDirectionFrom != Direction::None)
+	{
+		previousTile = level->GetNextTile(aCol, aRow, level->GetOppositeDirection(aDirectionFrom));
+	}
 
 	for (int i = 0; i < Direction::None; ++i)
 	{
 		Direction currentDir = static_cast<Direction>(i);
-
-		if (currentDir != level->GetOppositeDirection(aDirectionFrom))
+		Tile currentTile = level->GetNextTile(aCol, aRow, currentDir);
+		if ((currentTile == previousTile) == false)
 		{
-			if (level->GetNextTile(aCol, aRow, currentDir).mCollision != Collision::CollidesAll)
+			if (currentTile.mCollision != Collision::CollidesAll)
 			{
 				numberOfPathAvailable++;
 			}
