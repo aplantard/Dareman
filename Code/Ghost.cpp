@@ -4,6 +4,7 @@
 #include <GameEngine/SpriteSheet.h>
 #include <GameEngine/Level.h>
 #include <Dareman.h>
+#include <Windows.h>
  
 #include "Ghost.h"
 
@@ -53,6 +54,7 @@ Ghost::Ghost(Character aCharacter, int aPosX, int aPosY)
 	}
 
 	mTartgetTile = mDefaultTargetTile;
+	mPreviousTile = level->GetTile(mPosX / TILE_SIZE, mPosY / TILE_SIZE);
 	mDirection = Up;
 	mDirections.reserve(128);
 }
@@ -114,8 +116,7 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 					mChangeStateDuration = 0;
 					mState = GhostState::Scatter;
 					mScatterCount++;
-					mDirections = mDirections = level->ComputePath(
-						(int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
+					mDirections.clear();
 				}
 			}
 		}
@@ -131,10 +132,12 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			mDistanceMoved = 0;
 		}
 	}
-	bool arriveOnNextTile = false;
+
 	float remaining = deltaSeconds;
 	while (remaining > 0.f && mDirection != None)
 	{
+		bool hasComputedPath = false;
+
 		if (IsOnTile())
 		{
 			GameEngine* gameEngine = GameEngine::GetInstance();
@@ -165,8 +168,11 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 					}
 					else if (mState == GhostState::Chasing)
 					{
+						mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+
 						mDirections = level->ComputePath(
 							(int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, mTartgetTile.mCol, mTartgetTile.mRow, mDirection);
+						hasComputedPath = true;
 					}
 
 					if (mDirections.empty() == false)
@@ -183,19 +189,31 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow,
 								(int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE, Direction::None);
 						}
-						else if (mState == GhostState::Chasing || mState == GhostState::Scatter)
+						else if (mState == GhostState::Chasing)
 						{
+							mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
 							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
+						}
+						else if (mState == GhostState::Scatter)
+						{
+							mTartgetTile = mDefaultTargetTile;
+							mDirections = level->ComputePath(
+								currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
+
+							char buffer[50];
+							sprintf(buffer, "Recompute on tile : [ %d , %d ]\n", currentTile.mCol, currentTile.mRow);
+							OutputDebugString(buffer);
 						}
 						else if (mState == GhostState::Recovering)
 						{
 							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow, 13, 15, Direction::None);
 						}
 
+						hasComputedPath = true;
+
 						if (mDirections.empty() == false)
 						{
 							mDirection = mDirections.back();
-							mDirections.pop_back();
 						}
 					}
 					else
@@ -206,23 +224,40 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 
 			}
 
+			if ((mPreviousTile != currentTile) && hasComputedPath == false)
+			{
+				if (mDirections.size() <= 1)
+				{
+					mDirections.pop_back();
+				}
+				else
+				{
+					mDirections.pop_back();
+					mDirection = mDirections.back();
+				}
+
+				mPreviousTile = currentTile;
+			}
+			else if (mPreviousTile != currentTile)
+			{
+				mPreviousTile = currentTile;
+			}
+
 			if (mDirection != Direction::None && CanMove(mDirection))
 			{
-
-				remaining = MoveToNextTile(remaining, arriveOnNextTile);
+				remaining = MoveToNextTile(remaining);
 				UpdateSprite();
+			}
+			else
+			{
+				int test = 0;
 			}
 		}
 		else
 		{
-			remaining = MoveToNextTile(remaining, arriveOnNextTile);
+			remaining = MoveToNextTile(remaining);
 		}
 
-		if (arriveOnNextTile)
-		{
-			mDirections.pop_back();
-			mDirection = mDirections.back();
-		}
 	}
 }
 
@@ -241,7 +276,7 @@ int Ghost::GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirect
 	{
 		Direction currentDir = static_cast<Direction>(i);
 		Tile currentTile = level->GetNextTile(aCol, aRow, currentDir);
-		if ((currentTile == previousTile) == false)
+		if (currentTile != previousTile)
 		{
 			if (currentTile.mCollision != Collision::CollidesAll)
 			{
@@ -265,7 +300,7 @@ void Ghost::UpdateSprite()
 		case Right: mSpriteSheet->SelectSprite(0, 17); break;
 		}
 	}
-	else if (mState == GhostState::Chasing)
+	else if (mState == GhostState::Chasing || mState == GhostState::Scatter)
 	{
 		int row = 0;
 
@@ -323,7 +358,7 @@ void Ghost::ToggleSprite()
 
 		mSpriteSheet->SelectSprite(col, row);
 	}
-	else if (mState == GhostState::Chasing)
+	else if (mState == GhostState::Chasing || mState == GhostState::Scatter)
 	{
 		int row = 0;
 

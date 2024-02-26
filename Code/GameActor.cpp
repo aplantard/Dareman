@@ -30,9 +30,8 @@ bool GameActor::IsOnTile() const
 	return int(mPosX) % TILE_SIZE == 0 && int(mPosY) % TILE_SIZE == 0;
 }
 
-float GameActor::MoveToNextTile(float aDeltaTime, bool& aArriveOnNewTile)
+float GameActor::MoveToNextTile(float aDeltaTime)
 {
-	aArriveOnNewTile = false;
 	const float distanceMax = aDeltaTime * mSpeed;
 
 	Level* level = GameEngine::GetInstance()->GetLevel();
@@ -51,7 +50,6 @@ float GameActor::MoveToNextTile(float aDeltaTime, bool& aArriveOnNewTile)
 		{
 			mPosY = (float)nextTileY;
 			aDeltaTime -= distanceToNextTile / mSpeed;
-			aArriveOnNewTile = true;
 		}
 		else
 		{
@@ -68,7 +66,6 @@ float GameActor::MoveToNextTile(float aDeltaTime, bool& aArriveOnNewTile)
 		{
 			mPosY = (float)nextTileY;
 			aDeltaTime -= distanceToNextTile / mSpeed;
-			aArriveOnNewTile = true;
 		}
 		else
 		{
@@ -99,7 +96,6 @@ float GameActor::MoveToNextTile(float aDeltaTime, bool& aArriveOnNewTile)
 		{
 			mPosX = (float)nextTileX;
 			aDeltaTime -= distanceToNextTile / mSpeed;
-			aArriveOnNewTile = true;
 		}
 		else
 		{
@@ -141,7 +137,6 @@ float GameActor::MoveToNextTile(float aDeltaTime, bool& aArriveOnNewTile)
 		{
 			mPosX = (float)nextTileX;
 			aDeltaTime -= distanceToNextTile / mSpeed;
-			aArriveOnNewTile = true;
 		}
 		else
 		{

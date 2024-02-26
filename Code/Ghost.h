@@ -35,8 +35,9 @@ private:
 	std::vector<Direction> mDirections;
 	SpriteSheet* mSpriteSheet;
 	Tile mTartgetTile;
+	Tile mPreviousTile;
 	Tile mDefaultTargetTile;
-	const float mScatterTotalDuration = 30000;
+	const float mScatterTotalDuration = 5000;
 	const float mChasingTotalDuration = 20000;
 	float mChangeStateDuration = 0;
 	float mDistanceMoved = 0;

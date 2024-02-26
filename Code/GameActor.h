@@ -17,7 +17,7 @@ public:
 	void SetTilePosition(int aCol, int aRow);
 	inline std::pair<float, float> GetPosition() { return std::pair<float, float>(mPosX, mPosY); };
 	bool IsOnTile() const;
-	float MoveToNextTile(float aDeltaTime, bool& aArriveOnNewTile);
+	float MoveToNextTile(float aDeltaTime);
 	inline void SetSpeed(float aNewSpeed) { mSpeed = aNewSpeed; };
 
 	virtual bool CanMove(Direction aDirection) const { return false; };

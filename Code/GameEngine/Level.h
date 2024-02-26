@@ -55,6 +55,8 @@ struct Tile
 	{ 
 		return mCol == aOtherTile.mCol && mRow == aOtherTile.mRow;
 	}
+
+	bool operator!=(const Tile& aOtherTile) { return !(mCol == aOtherTile.mCol && mRow == aOtherTile.mRow); }
 };
 
 class Level
