@@ -168,9 +168,9 @@ void Level::LoadPickupFile(const char* aPath)
 			dareman = new Dareman(col, row);
 			break;
 		}
-		/* case 'B':
+		case 'B':
 		case 'I':
-		case 'P':*/
+		case 'P':
 		case 'C': 
 		{
 			gameEngine->AddActor(new Ghost((Character)pickupType, col, row));
@@ -228,12 +228,6 @@ void Level::Render(Renderer* aRenderer) const
 
 const Tile& Level::GetTile(int aCol, int aRow) const
 {
-
-
-	if ((aRow >= 0 && aRow < mTiles.size()) == false)
-	{
-		int i = 0;
-	}
 	assert(aRow >= 0 && aRow < mTiles.size());
 	assert(aCol >= 0 && aCol < mTiles[aRow].size());
 

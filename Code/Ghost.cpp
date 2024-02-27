@@ -28,32 +28,41 @@ Ghost::Ghost(Character aCharacter, int aPosX, int aPosY)
 	{
 	case Character::Blinky:
 	{
-		mDefaultTargetTile = level->GetTile(26, 1);
+		mDefaultTargetTile[0] = level->GetTile(26, 1);
+		mDefaultTargetTile[1] = level->GetTile(23, 5);
+		mDefaultTargetTile[2] = level->GetTile(21, 2);
+
 		mSpriteSheet->SelectSprite(0, BLINKY_ROW);
 		break;
 	}
 	case Character::Inky:
 	{
-		mDefaultTargetTile = level->GetTile(26, 29);
+		mDefaultTargetTile[0] = level->GetTile(26, 29);
+		mDefaultTargetTile[1] = level->GetTile(15, 27);
+		mDefaultTargetTile[2] = level->GetTile(21, 26);
 		mSpriteSheet->SelectSprite(0, INKY_ROW);
 		break;
 	}
 	case Character::Pinky:
 	{
-		mDefaultTargetTile = level->GetTile(1, 1);
+		mDefaultTargetTile[0] = level->GetTile(1, 1);
+		mDefaultTargetTile[1] = level->GetTile(6, 3);
+		mDefaultTargetTile[2] = level->GetTile(2, 5);
 		mSpriteSheet->SelectSprite(0, PINKY_ROW);
 		break;
 	}
 	case Character::Clyde:
 	{
-		mDefaultTargetTile = level->GetTile(1, 29);
+		mDefaultTargetTile[0] = level->GetTile(1, 29);
+		mDefaultTargetTile[1] = level->GetTile(7, 23);
+		mDefaultTargetTile[2] = level->GetTile(12, 27);
 		mSpriteSheet->SelectSprite(0, CLYDE_ROW);
 		break;
 	}
 	default: assert(false && "This character is not a ghost");
 	}
 
-	mTartgetTile = mDefaultTargetTile;
+	mTartgetTile = mDefaultTargetTile[mDefaultTargetTileIndex];
 	mPreviousTile = level->GetTile(mPosX / TILE_SIZE, mPosY / TILE_SIZE);
 	mDirection = Up;
 	mDirections.reserve(128);
@@ -112,7 +121,8 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 				{
 					Level* level = GameEngine::GetInstance()->GetLevel();
 
-					mTartgetTile = mDefaultTargetTile;
+					mDefaultTargetTileIndex = 0;
+					mTartgetTile = mDefaultTargetTile[mDefaultTargetTileIndex];
 					mChangeStateDuration = 0;
 					mState = GhostState::Scatter;
 					mScatterCount++;
@@ -196,7 +206,8 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 						}
 						else if (mState == GhostState::Scatter)
 						{
-							mTartgetTile = mDefaultTargetTile;
+							mDefaultTargetTileIndex = mDefaultTargetTileIndex + 1 >= (sizeof(mDefaultTargetTile) / sizeof(mDefaultTargetTile[0])) ? 0 : mDefaultTargetTileIndex + 1;
+							mTartgetTile = mDefaultTargetTile[mDefaultTargetTileIndex];
 							mDirections = level->ComputePath(
 								currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
 

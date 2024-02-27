@@ -36,11 +36,12 @@ private:
 	SpriteSheet* mSpriteSheet;
 	Tile mTartgetTile;
 	Tile mPreviousTile;
-	Tile mDefaultTargetTile;
-	const float mScatterTotalDuration = 5000;
+	Tile mDefaultTargetTile[3];
+	const float mScatterTotalDuration = 7000;
 	const float mChasingTotalDuration = 20000;
 	float mChangeStateDuration = 0;
 	float mDistanceMoved = 0;
 	int mScatterCount = 0;
+	int mDefaultTargetTileIndex = 0;
 	const int mNbScatterMax = 4;
 };
