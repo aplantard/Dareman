@@ -81,6 +81,8 @@ public:
 	inline float GetManhattanDistance(int aStartCol, int aStartRow, int aDestCol, int aDestRow) const;
 	Direction GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int aToRow) const;
 	Direction GetOppositeDirection(Direction aDirection) const;
+	Direction ClockWiseRotate(Direction aDirection) const;
+	Direction AntiClockWiseRotate(Direction aDirection) const;
 
 	int GetWidthPx() const { return mWidth * TILE_SIZE; }
 	int GetHeightPx() const { return mHeight * TILE_SIZE; }

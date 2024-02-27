@@ -63,6 +63,7 @@ void GameEngine::EatPickUp(int aCol, int aRow)
 					currentGhost->SetSpeed(0.5f * DEFAULT_SPEED);
 					currentGhost->ToggleSprite();
 					currentGhost->ClearDirections();
+					currentGhost->SetTurnBackFlee(true);
 				}
 			}
 		}

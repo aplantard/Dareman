@@ -79,6 +79,254 @@ void Ghost::ClearDirections()
 	mDirections.clear();
 }
 
+Direction Ghost::ComputeFleeingDirection()
+{
+	GameEngine* gameEngine = GameEngine::GetInstance();
+	Level* level = gameEngine->GetLevel();
+	std::pair<float, float> daremanPos = gameEngine->GetDareman()->GetPosition();
+	Tile currentTile = level->GetTile(mPosX / TILE_SIZE, mPosY / TILE_SIZE);
+	Tile previousTile;
+
+	if (mAllowTurnBackWhenFlee == false)
+	{
+		previousTile = level->GetNextTile(currentTile.mCol, currentTile.mRow, level->GetOppositeDirection(mDirection));
+	}
+
+	Direction dirToReturn = Direction::None;
+
+	float maxDistance = 0;
+	for (int i = 0; i < Direction::None; ++i)
+	{
+		Direction currentDir = static_cast<Direction>(i);
+
+		if (CanMove(currentDir))
+		{
+			Tile nextTile = level->GetNextTile(currentTile.mCol, currentTile.mRow, currentDir);
+			float nextTileDistance = level->GetManhattanDistance(
+				daremanPos.first / TILE_SIZE, daremanPos.second / TILE_SIZE, nextTile.mCol, nextTile.mRow);
+
+			if ((mAllowTurnBackWhenFlee || nextTile != previousTile) && nextTileDistance > maxDistance)
+			{
+				maxDistance = nextTileDistance;
+				dirToReturn = currentDir;
+			}
+		}
+	}
+
+	return dirToReturn;
+}
+
+Tile Ghost::ComputeTargetTile()
+{
+	GameEngine* gameEngine = GameEngine::GetInstance();
+	Level* level = gameEngine->GetLevel();
+	Dareman* dareman = gameEngine->GetDareman();
+	std::pair<float, float> daremanPos = dareman->GetPosition();
+
+	switch (mCharacter)
+	{
+	case Character::Blinky:
+	{
+		return level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+	}
+	case Character::Inky:
+	{
+		Direction daremanDirection = dareman->GetDaremanDirection();
+		Tile target = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+
+		int nbTilesLeft = 2;
+
+		while (nbTilesLeft > 0)
+		{
+			Tile nextTile = level->GetNextTile(target.mCol, target.mRow, daremanDirection);
+			if (nextTile.mCollision != Collision::CollidesAll)
+			{
+				target = nextTile;
+				nbTilesLeft--;
+			}
+			else
+			{
+				Direction clockwise = level->ClockWiseRotate(daremanDirection);
+				nextTile = level->GetNextTile(target.mCol, target.mRow, clockwise);
+
+				if (nextTile.mCollision != Collision::CollidesAll)
+				{
+					target = nextTile;
+					nbTilesLeft--;
+				}
+				else
+				{
+					Direction antiClockwise = level->AntiClockWiseRotate(daremanDirection);
+					nextTile = level->GetNextTile(target.mCol, target.mRow, daremanDirection);
+
+					if (nextTile.mCollision != Collision::CollidesAll)
+					{
+						target = nextTile;
+						nbTilesLeft--;
+					}
+					else
+					{
+						nextTile = level->GetNextTile(target.mCol, target.mRow, level->GetOppositeDirection(daremanDirection));
+						if (nextTile.mCollision != Collision::CollidesAll)
+						{
+							target = nextTile;
+							nbTilesLeft--;
+						}
+						else
+						{
+							// This shouldn't happen
+							assert(false);
+							nbTilesLeft = -1;
+						}
+					}
+				}
+			}
+		}
+
+		Ghost* blinkyGhost = nullptr; 
+		for (auto gameActor : gameEngine->GetActors())
+		{
+			if (gameActor->IsDareman() == false)
+			{
+				Ghost* currentGhost = (Ghost*)gameActor;
+				if (currentGhost->mCharacter == Character::Blinky)
+				{
+					blinkyGhost = currentGhost;
+				}
+			}
+		}
+
+		if (blinkyGhost != nullptr)
+		{
+			std::pair<float, float> vectorBlinkyTarget = {(target.mCol * TILE_SIZE) - blinkyGhost->mPosX, (target.mRow * TILE_SIZE) - blinkyGhost->mPosY};
+			vectorBlinkyTarget.first *= 2;
+			vectorBlinkyTarget.second *= 2;
+
+			std::pair<float, float> vectorActualTarget = {
+				blinkyGhost->mPosX + vectorBlinkyTarget.first, blinkyGhost->mPosY + vectorBlinkyTarget.second};
+			
+			target = level->GetTile(vectorActualTarget.first / TILE_SIZE, vectorActualTarget.second / TILE_SIZE);
+		}
+
+		return target;
+	}
+	case Character::Pinky:
+	{
+		Direction daremanDirection = dareman->GetDaremanDirection();
+		Tile target = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+
+		int nbTilesLeft = 4;
+
+		while (nbTilesLeft > 0)
+		{
+			Tile nextTile = level->GetNextTile(target.mCol, target.mRow, daremanDirection);
+			if (nextTile.mCollision != Collision::CollidesAll)
+			{
+				target = nextTile;
+				nbTilesLeft--;
+			}
+			else
+			{
+				Direction clockwise = level->ClockWiseRotate(daremanDirection);
+				nextTile = level->GetNextTile(target.mCol, target.mRow, clockwise);
+
+				if (nextTile.mCollision != Collision::CollidesAll)
+				{
+					target = nextTile;
+					nbTilesLeft--;
+				}
+				else
+				{
+					Direction antiClockwise = level->AntiClockWiseRotate(daremanDirection);
+					nextTile = level->GetNextTile(target.mCol, target.mRow, daremanDirection);
+
+					if (nextTile.mCollision != Collision::CollidesAll)
+					{
+						target = nextTile;
+						nbTilesLeft--;
+					}
+					else
+					{
+						nextTile = level->GetNextTile(target.mCol, target.mRow, level->GetOppositeDirection(daremanDirection));
+						if (nextTile.mCollision != Collision::CollidesAll)
+						{
+							target = nextTile;
+							nbTilesLeft--;
+						}
+						else
+						{
+							//This shouldn't happen
+							assert(false);
+							nbTilesLeft = -1;
+						}
+					}
+				}
+			}
+		}
+
+		return target;
+	}
+	case Character::Clyde:
+	{
+		Direction daremanDirection = dareman->GetDaremanDirection();
+		Tile target = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+
+		//Here we should compute the path to have the exacte number of tile.
+		if (level->GetManhattanDistance((int) mPosX / TILE_SIZE, (int) mPosY / TILE_SIZE, target.mCol, target.mRow) > 8)
+		{
+			target = mDefaultTargetTile[mDefaultTargetTileIndex];
+		}
+
+		return target;
+	}
+	default: break;
+	}
+}
+
+void Ghost::UpdateState(std::chrono::duration<double, std::milli> aDeltaTime) 
+{
+	if (mState == GhostState::Scatter || mState == GhostState::Chasing)
+	{
+		mChangeStateDuration += aDeltaTime.count();
+
+		if (mState == GhostState::Scatter)
+		{
+			float scatterDuration = mScatterTotalDuration;
+			if (mScatterCount > 2)
+			{
+				scatterDuration *= 1.4;
+			}
+
+			if (mChangeStateDuration >= scatterDuration)
+			{
+				GameEngine* gameEngine = GameEngine::GetInstance();
+				Level* level = gameEngine->GetLevel();
+
+				std::pair<float, float> daremanPos = gameEngine->GetDareman()->GetPosition();
+
+				mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+				mChangeStateDuration = 0;
+				mState = GhostState::Chasing;
+				mDirections.clear();
+			}
+		}
+		else if (mScatterCount <= mNbScatterMax)
+		{
+			if (mChangeStateDuration >= mChasingTotalDuration)
+			{
+				Level* level = GameEngine::GetInstance()->GetLevel();
+
+				mDefaultTargetTileIndex = 0;
+				mTartgetTile = mDefaultTargetTile[mDefaultTargetTileIndex];
+				mChangeStateDuration = 0;
+				mState = GhostState::Scatter;
+				mScatterCount++;
+				mDirections.clear();
+			}
+		}
+	}
+}
+
 void Ghost::Render(Renderer* aRenderer) const
 {
 	aRenderer->DrawSpriteFromSpriteSheet(mSpriteSheet, mPosX, mPosY);
@@ -86,51 +334,9 @@ void Ghost::Render(Renderer* aRenderer) const
 
 void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime) 
 {
+	UpdateState(aDeltaTime);
+
 	const float deltaSeconds = float(aDeltaTime.count()) / 1000.f;
-
-	// Manage Scatter Chasing state switch 
-	{
-		if (mState == GhostState::Scatter || mState == GhostState::Chasing)
-		{
-			mChangeStateDuration += aDeltaTime.count();
-
-			if (mState == GhostState::Scatter)
-			{
-				float scatterDuration = mScatterTotalDuration;
-				if (mScatterCount > 2)
-				{
-					scatterDuration *= 1.4;
-				}
-
-				if (mChangeStateDuration >= scatterDuration)
-				{
-					GameEngine* gameEngine = GameEngine::GetInstance();
-					Level* level = gameEngine->GetLevel();
-
-					std::pair<float, float> daremanPos = gameEngine->GetDareman()->GetPosition();
-
-					mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
-					mChangeStateDuration = 0;
-					mState = GhostState::Chasing;
-					mDirections.clear();
-				}
-			}
-			else if (mScatterCount <= mNbScatterMax)
-			{
-				if (mChangeStateDuration >= mChasingTotalDuration)
-				{
-					Level* level = GameEngine::GetInstance()->GetLevel();
-
-					mDefaultTargetTileIndex = 0;
-					mTartgetTile = mDefaultTargetTile[mDefaultTargetTileIndex];
-					mChangeStateDuration = 0;
-					mState = GhostState::Scatter;
-					mScatterCount++;
-					mDirections.clear();
-				}
-			}
-		}
-	}
 
 	// Compute Sprite animation, average calculation to change sprite when changing tile. (It doesn't need to be really accurate).
 	{
@@ -162,28 +368,18 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 				{
 					if (mState == GhostState::Fleeing)
 					{
-						float maxDistance = 0;
-						for (int i = 0; i < Direction::None; ++i)
-						{
-							Direction currentDir = static_cast<Direction>(i);
-							Tile nextTile = level->GetNextTile(currentTile.mCol, currentTile.mRow, currentDir);
-
-							if (level->GetManhattanDistance(
-									daremanPos.first / TILE_SIZE, daremanPos.second / TILE_SIZE, nextTile.mCol, nextTile.mRow)
-								> maxDistance)
-							{
-								mDirection = currentDir;
-							}
-						}
+						mDirections.clear();
+						mDirections.push_back(ComputeFleeingDirection());
+						mAllowTurnBackWhenFlee = false;
 					}
 					else if (mState == GhostState::Chasing)
 					{
-						mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
-
+						mTartgetTile = ComputeTargetTile();
 						mDirections = level->ComputePath(
 							(int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, mTartgetTile.mCol, mTartgetTile.mRow, mDirection);
-						hasComputedPath = true;
 					}
+
+					hasComputedPath = true;
 
 					if (mDirections.empty() == false)
 					{
@@ -196,12 +392,13 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 					{
 						if (mState == GhostState::Fleeing)
 						{
-							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow,
-								(int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE, Direction::None);
+							mDirections.clear();
+							mDirections.push_back(ComputeFleeingDirection());
+							mAllowTurnBackWhenFlee = false;
 						}
 						else if (mState == GhostState::Chasing)
 						{
-							mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+							mTartgetTile = ComputeTargetTile();
 							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
 						}
 						else if (mState == GhostState::Scatter)
@@ -210,10 +407,6 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 							mTartgetTile = mDefaultTargetTile[mDefaultTargetTileIndex];
 							mDirections = level->ComputePath(
 								currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
-
-							char buffer[50];
-							sprintf(buffer, "Recompute on tile : [ %d , %d ]\n", currentTile.mCol, currentTile.mRow);
-							OutputDebugString(buffer);
 						}
 						else if (mState == GhostState::Recovering)
 						{
@@ -299,7 +492,7 @@ int Ghost::GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirect
 	return numberOfPathAvailable;
 }
 
-void Ghost::UpdateSprite() 
+void Ghost::UpdateSprite() const
 {
 	if (mState == GhostState::Recovering)
 	{	
@@ -334,7 +527,7 @@ void Ghost::UpdateSprite()
 	}
 }
 
-void Ghost::ToggleSprite() 
+void Ghost::ToggleSprite() const
 {
 	SDL_Rect selection = mSpriteSheet->GetSelection();
 	int col = selection.x / selection.w;

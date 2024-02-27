@@ -18,11 +18,15 @@ public:
 	~Ghost();
 
 	int GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirectionFrom);
-	void UpdateSprite();
-	void ToggleSprite();
-	inline GhostState GetState() { return mState; };
+	void UpdateSprite() const;
+	void ToggleSprite() const;
+	inline GhostState GetState() const { return mState; };
 	inline void SetState(GhostState aNewGhostState) { mState = aNewGhostState;};
+	inline void SetTurnBackFlee(bool aTurnBackAllowed) { mAllowTurnBackWhenFlee = aTurnBackAllowed;};
 	void ClearDirections();
+	Direction ComputeFleeingDirection();
+	Tile ComputeTargetTile();
+	void UpdateState(std::chrono::duration<double, std::milli> aDeltaTime);
 
 	virtual void Render(Renderer* aRenderer) const override;
 	virtual void Update(std::chrono::duration<double, std::milli> aDeltaTime) override;
@@ -44,4 +48,5 @@ private:
 	int mScatterCount = 0;
 	int mDefaultTargetTileIndex = 0;
 	const int mNbScatterMax = 4;
+	bool mAllowTurnBackWhenFlee = false;
 };

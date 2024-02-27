@@ -170,8 +170,8 @@ void Level::LoadPickupFile(const char* aPath)
 		}
 		case 'B':
 		case 'I':
-		case 'P':
-		case 'C': 
+		//case 'P':
+		//case 'C': 
 		{
 			gameEngine->AddActor(new Ghost((Character)pickupType, col, row));
 
@@ -437,10 +437,45 @@ Direction Level::GetOppositeDirection(Direction aDirection) const
 		case Direction::Down: return Direction::Up;
 		case Direction::Right: return Direction::Left;
 		case Direction::Left: return Direction::Right;
+		case Direction::None: return Direction::Right;
 		default:
 		{
 			assert(false); // This should not happen
 			return Direction::None;
 		}
+	}
+}
+
+Direction Level::ClockWiseRotate(Direction aDirection) const
+{
+	switch (aDirection)
+	{
+	case Direction::Up: return Direction::Right;
+	case Direction::Down: return Direction::Left;
+	case Direction::Right: return Direction::Down;
+	case Direction::Left: return Direction::Up;
+	case Direction::None: return Direction ::Up;
+	default:
+	{
+		assert(false); // This should not happen
+		return Direction::None;
+	}
+	}
+}
+
+Direction Level::AntiClockWiseRotate(Direction aDirection) const
+{
+	switch (aDirection)
+	{
+	case Direction::Up: return Direction::Left;
+	case Direction::Down: return Direction::Right;
+	case Direction::Right: return Direction::Up;
+	case Direction::Left: return Direction::Down;
+	case Direction::None: return Direction ::Up;
+	default:
+	{
+		assert(false); // This should not happen
+		return Direction::None;
+	}
 	}
 }

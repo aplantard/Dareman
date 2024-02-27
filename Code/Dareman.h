@@ -13,7 +13,8 @@ public:
 	void UpdateSprite();
 	void ToggleSprite();
 	void DaremanDeathAnimation(std::chrono::duration<double, std::milli> aDeltaTime);
-	inline int GetDaremanDeathAnimStep() { return mDeathAnimationStepPassed; };
+	inline const int GetDaremanDeathAnimStep() const { return mDeathAnimationStepPassed; };
+	inline const Direction GetDaremanDirection() const { return mDirection; };
 
 	virtual void Update(std::chrono::duration<double, std::milli> aDeltaTime) override;
 	virtual void Render(Renderer* aRenderer) const override;
