@@ -155,7 +155,7 @@ void Dareman::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			}
 			else
 			{
-				mDirection = None; // Stop movement and exit loop
+				break;
 			}
 		}
 		else

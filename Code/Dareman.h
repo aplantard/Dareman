@@ -22,12 +22,10 @@ public:
 	virtual bool IsDareman() const override { return true; };
 
 private:
-	Direction mWantedDirection;
 	SpriteSheet* mSpriteSheet;
-
+	Direction mWantedDirection;
 	float mDistanceMoved = 0;
-
 	const float mDeathAnimationTotalDuration = 2000;
-	int mDeathAnimationStepPassed = 0;
 	float mDeathAnimationStepDuration = 0;
+	int mDeathAnimationStepPassed = 0;
 };

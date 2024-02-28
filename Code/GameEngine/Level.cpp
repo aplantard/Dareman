@@ -170,8 +170,8 @@ void Level::LoadPickupFile(const char* aPath)
 		}
 		case 'B':
 		case 'I':
-		//case 'P':
-		//case 'C': 
+		case 'P':
+		case 'C': 
 		{
 			gameEngine->AddActor(new Ghost((Character)pickupType, col, row));
 
@@ -197,6 +197,8 @@ void Level::LoadPickupFile(const char* aPath)
 	// Check integrity of the level
 	mWidth = (int)mTiles[0].size();
 	mHeight = (int)mTiles.size();
+
+	mTotalPickupCount = mPickupCount;
 }
 
 bool Level::IsValid() const
@@ -236,37 +238,139 @@ const Tile& Level::GetTile(int aCol, int aRow) const
 
 const Tile& Level::GetNextTile(int aCol, int aRow, Direction aDirection) const
 {
+	int levelWidth = mTiles[0].size();
+	int levelHeight = mTiles.size();
+
 	switch (aDirection)
 	{
-	case Up: return GetTile(aCol, aRow - 1);
-	case Down: return GetTile(aCol, aRow + 1);
+	case Up: return GetTile(aCol, std::max(aRow - 1, 0));
+	case Down: return GetTile(aCol, std::min(aRow + 1, levelHeight - 1));
 	case Right:
 	{
-		if (aRow == (mTiles.size()/2) - 1)
+		if (aRow == (levelHeight / 2) - 1)
 		{
-			if (aCol == (mTiles[0].size() - 1))
+			if (aCol == (levelWidth - 1))
 			{
 				return GetTile(0, aRow);
 			}
 		}
-		return GetTile(aCol + 1, aRow);
+		return GetTile(std::min(aCol + 1, levelWidth - 1), aRow);
 	}
 	case Left:
 	{
-		if (aRow == (mTiles.size() / 2) - 1)
+		if (aRow == (levelHeight / 2) - 1)
 		{
 			if (aCol == 0)
 			{
-				return GetTile(mTiles[0].size() - 1, aRow);
+				return GetTile(levelWidth - 1, aRow);
 			}
 		}
 
-		return GetTile(aCol - 1, aRow);
+		return GetTile(std::max(aCol - 1, 0), aRow);
 	}
 	default:
 		assert(false); // This should not happen
 		return mTiles[0][0];
 	}
+}
+
+const Tile& Level::GetClosestTileNonBlocking(int aCol, int aRow, Direction aDirection) const
+{
+	Tile startTile = GetTile(aCol, aRow);
+
+	if (startTile.mCollision != Collision::CollidesAll)
+	{
+		return startTile;
+	}
+
+	std::vector<std::pair<Tile,Direction>> openList;
+
+	Tile frontTile = GetNextTile(startTile.mCol, startTile.mRow, aDirection);
+	if (frontTile.mCollision == Collision::CollidesAll && frontTile != startTile)
+	{
+		openList.push_back(std::pair<Tile,Direction>(frontTile, aDirection));
+	}
+	else if (frontTile != startTile)
+	{
+		return frontTile;
+	}
+
+	Direction rightDirection = ClockWiseRotate(aDirection);
+	Tile rightTile = GetNextTile(startTile.mCol, startTile.mRow, rightDirection);
+	if (rightTile.mCollision == Collision::CollidesAll && rightTile != startTile)
+	{
+		openList.push_back(std::pair<Tile,Direction>(rightTile, rightDirection));
+	}
+	else if (rightTile != startTile)
+	{
+		return rightTile;
+	}
+
+	Direction leftDirection = AntiClockWiseRotate(aDirection);
+	Tile leftTile = GetNextTile(startTile.mCol, startTile.mRow, AntiClockWiseRotate(aDirection));
+	if (leftTile.mCollision == Collision::CollidesAll && leftTile != startTile)
+	{
+		openList.push_back(std::pair<Tile, Direction>(leftTile, leftDirection));
+	}
+	else if (leftTile != startTile)
+	{
+		return leftTile;
+	}
+
+	Direction behindDirection = GetOppositeDirection(aDirection);
+	Tile behindTile = GetNextTile(startTile.mCol, startTile.mRow, GetOppositeDirection(aDirection));
+	if (behindTile.mCollision == Collision::CollidesAll && behindTile != startTile)
+	{
+		openList.push_back(std::pair<Tile, Direction>(behindTile, behindDirection));
+	}
+	else if (behindTile != startTile)
+	{
+		return behindTile;
+	}
+
+	std::pair<Tile, Direction> currentTile = openList[0];
+
+	while (openList.empty() == false /* && openList.size() < (mTiles.size() * mTiles[0].size())*/)
+	{
+		rightDirection = ClockWiseRotate(currentTile.second);
+		rightTile = GetNextTile(currentTile.first.mCol, currentTile.first.mRow, rightDirection);
+
+		if (rightTile.mCollision == Collision::CollidesAll && rightTile != currentTile.first)
+		{
+			openList.push_back(std::pair<Tile, Direction>(rightTile, rightDirection));
+		}
+		else if (rightTile != currentTile.first)
+		{
+			return rightTile;
+		}
+
+		leftDirection = AntiClockWiseRotate(currentTile.second);
+		leftTile = GetNextTile(currentTile.first.mCol, currentTile.first.mRow, leftDirection);
+		if (leftTile.mCollision == Collision::CollidesAll && leftTile != currentTile.first)
+		{
+			openList.push_back(std::pair<Tile, Direction>(leftTile, leftDirection));
+		}
+		else if (leftTile != currentTile.first)
+		{
+			return leftTile;
+		}
+
+		
+		frontTile = GetNextTile(currentTile.first.mCol, currentTile.first.mRow, currentTile.second);
+		if (frontTile.mCollision == Collision::CollidesAll && frontTile != currentTile.first)
+		{
+			openList.push_back(std::pair<Tile, Direction>(frontTile, currentTile.second));
+		}
+		else if (frontTile != currentTile.first)
+		{
+			return frontTile;
+		}
+
+		openList.erase(openList.begin());
+		currentTile = openList[0];
+	}
+	openList.clear();
+	return startTile;
 }
 
 void Level::RemovePickUp(int aCol, int aRow)

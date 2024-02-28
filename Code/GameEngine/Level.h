@@ -45,11 +45,12 @@ enum class Character : char
 struct Tile
 {
 	Sprite* mSprite = nullptr;
-	Collision mCollision = Collision::None;
-	Pickup mPickup = Pickup::None;
 
 	int mCol = 0;
 	int mRow = 0;
+
+	Collision mCollision = Collision::None;
+	Pickup mPickup = Pickup::None;
 
 	bool operator==(const Tile& aOtherTile)
 	{ 
@@ -73,8 +74,10 @@ public:
 
 	const Tile& GetTile(int aCol, int aRow) const;
 	const Tile& GetNextTile(int aCol, int aRow, Direction aDirection) const;
+	const Tile& GetClosestTileNonBlocking(int aCol, int aRow, Direction aDirection) const;
 	void RemovePickUp(int aCol, int aRow);
-	inline int GetPickupCount() const { return mPickupCount; }
+	inline const int GetPickupCount() const { return mPickupCount; }
+	inline const int GetTotalPickupCount() const { return mTotalPickupCount; }
 
 	std::vector<Direction> ComputePath(
 		int aStartCol, int aStartRow, int aDestCol, int aDestRow, Direction aDirectionFrom) const;
@@ -100,4 +103,5 @@ private:
 	int mWidth;
 	int mHeight;
 	int mPickupCount;
+	int mTotalPickupCount;
 };

@@ -26,8 +26,8 @@ public:
 	virtual bool IsDareman() const { return false; };
 
 protected:
-	Direction mDirection;
 	Sprite* mSprite;
+	Direction mDirection;
 	float mPosX;
 	float mPosY;
 	float mSpeed = 0;

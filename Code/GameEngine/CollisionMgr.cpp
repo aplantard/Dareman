@@ -26,7 +26,7 @@ void CollisionMgr::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 
 			if ((int)daremanPos.first / TILE_SIZE == (int)currentGhostPos.first / TILE_SIZE && (int)daremanPos.second / TILE_SIZE == (int)currentGhostPos.second / TILE_SIZE)
 			{
-				if (ghostState == GhostState::Chasing)
+				if (ghostState == GhostState::Chasing || ghostState == GhostState::Scatter)
 				{
 					gameEngine->KillDareman();
 				}

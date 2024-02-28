@@ -116,7 +116,7 @@ Direction Ghost::ComputeFleeingDirection()
 	return dirToReturn;
 }
 
-Tile Ghost::ComputeTargetTile()
+Tile Ghost::ComputeChasingTargetTile()
 {
 	GameEngine* gameEngine = GameEngine::GetInstance();
 	Level* level = gameEngine->GetLevel();
@@ -134,53 +134,34 @@ Tile Ghost::ComputeTargetTile()
 		Direction daremanDirection = dareman->GetDaremanDirection();
 		Tile target = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
 
-		int nbTilesLeft = 2;
-
-		while (nbTilesLeft > 0)
+		switch (daremanDirection)
 		{
-			Tile nextTile = level->GetNextTile(target.mCol, target.mRow, daremanDirection);
-			if (nextTile.mCollision != Collision::CollidesAll)
+			case Up:
 			{
-				target = nextTile;
-				nbTilesLeft--;
+				target.mRow -= 2;
+				break;
 			}
-			else
+			case Down:
 			{
-				Direction clockwise = level->ClockWiseRotate(daremanDirection);
-				nextTile = level->GetNextTile(target.mCol, target.mRow, clockwise);
-
-				if (nextTile.mCollision != Collision::CollidesAll)
-				{
-					target = nextTile;
-					nbTilesLeft--;
-				}
-				else
-				{
-					Direction antiClockwise = level->AntiClockWiseRotate(daremanDirection);
-					nextTile = level->GetNextTile(target.mCol, target.mRow, daremanDirection);
-
-					if (nextTile.mCollision != Collision::CollidesAll)
-					{
-						target = nextTile;
-						nbTilesLeft--;
-					}
-					else
-					{
-						nextTile = level->GetNextTile(target.mCol, target.mRow, level->GetOppositeDirection(daremanDirection));
-						if (nextTile.mCollision != Collision::CollidesAll)
-						{
-							target = nextTile;
-							nbTilesLeft--;
-						}
-						else
-						{
-							// This shouldn't happen
-							assert(false);
-							nbTilesLeft = -1;
-						}
-					}
-				}
+				target.mRow += 2;
+				break;
 			}
+			case Left:
+			{
+				target.mCol -= 2;
+				break;
+			}
+			case Right:
+			{
+				target.mCol += 2;
+				break;
+			}
+			case None:
+			{
+				target.mRow -= 2;
+				break;
+			}
+		default: break;
 		}
 
 		Ghost* blinkyGhost = nullptr; 
@@ -202,11 +183,14 @@ Tile Ghost::ComputeTargetTile()
 			vectorBlinkyTarget.first *= 2;
 			vectorBlinkyTarget.second *= 2;
 
-			std::pair<float, float> vectorActualTarget = {
-				blinkyGhost->mPosX + vectorBlinkyTarget.first, blinkyGhost->mPosY + vectorBlinkyTarget.second};
+			float actualTargetX = std::clamp(blinkyGhost->mPosX + vectorBlinkyTarget.first, 0.f, (float)level->GetWidthPx() - TILE_SIZE);
+			float actualTargetY = std::clamp(blinkyGhost->mPosY + vectorBlinkyTarget.second, 0.f, (float)level->GetHeightPx() - TILE_SIZE);
+			std::pair<float, float> vectorActualTarget = {actualTargetX, actualTargetY};
 			
 			target = level->GetTile(vectorActualTarget.first / TILE_SIZE, vectorActualTarget.second / TILE_SIZE);
 		}
+
+		target = level->GetClosestTileNonBlocking(target.mCol, target.mRow, daremanDirection);
 
 		return target;
 	}
@@ -274,6 +258,7 @@ Tile Ghost::ComputeTargetTile()
 		//Here we should compute the path to have the exacte number of tile.
 		if (level->GetManhattanDistance((int) mPosX / TILE_SIZE, (int) mPosY / TILE_SIZE, target.mCol, target.mRow) > 8)
 		{
+			mDefaultTargetTileIndex = mDefaultTargetTileIndex + 1 >= (sizeof(mDefaultTargetTile) / sizeof(mDefaultTargetTile[0])) ? 0 : mDefaultTargetTileIndex + 1;
 			target = mDefaultTargetTile[mDefaultTargetTileIndex];
 		}
 
@@ -285,7 +270,7 @@ Tile Ghost::ComputeTargetTile()
 
 void Ghost::UpdateState(std::chrono::duration<double, std::milli> aDeltaTime) 
 {
-	if (mState == GhostState::Scatter || mState == GhostState::Chasing)
+	if ((mState == GhostState::Scatter || mState == GhostState::Chasing) && IsAllowedToLeaveGhostHouse())
 	{
 		mChangeStateDuration += aDeltaTime.count();
 
@@ -327,6 +312,34 @@ void Ghost::UpdateState(std::chrono::duration<double, std::milli> aDeltaTime)
 	}
 }
 
+bool Ghost::IsAllowedToLeaveGhostHouse()
+{
+	GameEngine* gameEngine = GameEngine::GetInstance();
+	Level* level = gameEngine->GetLevel();
+
+	switch (mCharacter)
+	{
+	case Character::Blinky:
+	{
+		return true;
+	}
+	case Character::Inky:
+	{
+		return level->GetTotalPickupCount() - level->GetPickupCount() >= 30;
+	}
+	case Character::Pinky:
+	{
+		return true;
+	}
+	case Character::Clyde:
+	{
+		int totalPickupCount = level->GetTotalPickupCount();
+		return totalPickupCount - level->GetPickupCount() >= totalPickupCount / 3;
+	}
+	default: break;
+	}
+}
+
 void Ghost::Render(Renderer* aRenderer) const
 {
 	aRenderer->DrawSpriteFromSpriteSheet(mSpriteSheet, mPosX, mPosY);
@@ -350,7 +363,7 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 	}
 
 	float remaining = deltaSeconds;
-	while (remaining > 0.f && mDirection != None)
+	while (remaining > 0.f && mDirection != None && IsAllowedToLeaveGhostHouse())
 	{
 		bool hasComputedPath = false;
 
@@ -374,9 +387,13 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 					}
 					else if (mState == GhostState::Chasing)
 					{
-						mTartgetTile = ComputeTargetTile();
+						mTartgetTile = ComputeChasingTargetTile();
+						if (mTartgetTile == currentTile)
+						{
+							mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+						}
 						mDirections = level->ComputePath(
-							(int)mPosX / TILE_SIZE, (int)mPosY / TILE_SIZE, mTartgetTile.mCol, mTartgetTile.mRow, mDirection);
+							currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, mDirection);
 					}
 
 					hasComputedPath = true;
@@ -398,15 +415,22 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 						}
 						else if (mState == GhostState::Chasing)
 						{
-							mTartgetTile = ComputeTargetTile();
+							mTartgetTile = ComputeChasingTargetTile();
+							if (mTartgetTile == currentTile)
+							{
+								mTartgetTile = level->GetTile((int)daremanPos.first / TILE_SIZE, (int)daremanPos.second / TILE_SIZE);
+							}
 							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
 						}
 						else if (mState == GhostState::Scatter)
 						{
-							mDefaultTargetTileIndex = mDefaultTargetTileIndex + 1 >= (sizeof(mDefaultTargetTile) / sizeof(mDefaultTargetTile[0])) ? 0 : mDefaultTargetTileIndex + 1;
+							mDefaultTargetTileIndex = mDefaultTargetTileIndex + 1
+									>= (sizeof(mDefaultTargetTile) / sizeof(mDefaultTargetTile[0]))
+								? 0
+								: mDefaultTargetTileIndex + 1;
 							mTartgetTile = mDefaultTargetTile[mDefaultTargetTileIndex];
-							mDirections = level->ComputePath(
-								currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
+
+							mDirections = level->ComputePath(currentTile.mCol, currentTile.mRow, mTartgetTile.mCol, mTartgetTile.mRow, Direction::None);
 						}
 						else if (mState == GhostState::Recovering)
 						{
@@ -451,10 +475,6 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			{
 				remaining = MoveToNextTile(remaining);
 				UpdateSprite();
-			}
-			else
-			{
-				int test = 0;
 			}
 		}
 		else

@@ -25,8 +25,9 @@ public:
 	inline void SetTurnBackFlee(bool aTurnBackAllowed) { mAllowTurnBackWhenFlee = aTurnBackAllowed;};
 	void ClearDirections();
 	Direction ComputeFleeingDirection();
-	Tile ComputeTargetTile();
+	Tile ComputeChasingTargetTile();
 	void UpdateState(std::chrono::duration<double, std::milli> aDeltaTime);
+	bool IsAllowedToLeaveGhostHouse();
 
 	virtual void Render(Renderer* aRenderer) const override;
 	virtual void Update(std::chrono::duration<double, std::milli> aDeltaTime) override;
@@ -34,13 +35,12 @@ public:
 	virtual bool IsDareman() const override { return false; };
 
 private:
-	Character mCharacter;
-	GhostState mState = GhostState::Chasing;
 	std::vector<Direction> mDirections;
 	SpriteSheet* mSpriteSheet;
+	Tile mDefaultTargetTile[3];
 	Tile mTartgetTile;
 	Tile mPreviousTile;
-	Tile mDefaultTargetTile[3];
+	GhostState mState = GhostState::Chasing;
 	const float mScatterTotalDuration = 7000;
 	const float mChasingTotalDuration = 20000;
 	float mChangeStateDuration = 0;
@@ -49,4 +49,5 @@ private:
 	int mDefaultTargetTileIndex = 0;
 	const int mNbScatterMax = 4;
 	bool mAllowTurnBackWhenFlee = false;
+	Character mCharacter;	
 };

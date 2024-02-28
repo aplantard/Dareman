@@ -45,6 +45,8 @@ private:
 	~GameEngine();
 	GameEngine(const GameEngine& anOther) = delete;
 
+	std::vector<GameActor*> mGameActors;
+
 	Renderer* mRenderer;
 	GameStateMgr* mGameStateMgr;
 	Level* mLevel;
@@ -53,14 +55,13 @@ private:
 	GameUI* mGameUI;
 	CollisionMgr* mCollisionMgr;
 
-	std::vector<GameActor*> mGameActors;
+	float mEnergizerTotalDuration = 10000;
+	float mEnergizerEndWarningTime = 7000;
+	float mEnergizerDuration = -1;
 
 	unsigned int mPlayerScore = 0;
 	unsigned int mNbGhostKilled = 0;
 
-	float mEnergizerTotalDuration = 10000;
-	float mEnergizerEndWarningTime = 7000;
-	float mEnergizerDuration = -1;
 
 	static GameEngine* sInstance;
 };

@@ -13,11 +13,9 @@ public:
 	inline void SetFpsCount(float aNewFpsValue) { mFpsCount = aNewFpsValue; };
 
 private:
-
-	int mHeaderHeight = 0;
+	char mFpsLabel[16] = "FPS: ";
+	char mTitleLabel[16] = "dareman";
+	char mScroreLabel[16] = "Score: ";
 	float mFpsCount = 0.f;
-	char mFpsLabel[15] = "FPS: ";
-	char mTitleLabel[15] = "dareman";
-	char mScroreLabel[15] = "Score: ";
-	
+	int mHeaderHeight = 0;	
 };

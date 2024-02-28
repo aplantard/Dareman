@@ -12,6 +12,8 @@ public:
 
 private:
 	Sprite* mBackground = nullptr;
+	char* mTitleLabel = "Title";
+	char* mTextLabel = "Text";
 	int mModalWidth = 0;
 	int mModalHeight = 0;
 
@@ -20,7 +22,4 @@ private:
 
 	int mTextWidth = 0;
 	int mTextHeight = 0;
-
-	char* mTitleLabel = "Title";
-	char* mTextLabel= "Text";
 };
