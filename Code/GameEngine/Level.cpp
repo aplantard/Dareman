@@ -530,6 +530,20 @@ Direction Level::GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int 
 		return Direction::Left;
 	}
 
+	int middleRow = ((GetHeightPx() / TILE_SIZE) / 2) - 1;
+	if ((aFromRow == middleRow && aToRow == middleRow))
+	{
+		int lastCol = (GetWidthPx() / TILE_SIZE) - 1;
+		if (aFromCol == 0 && aToCol == lastCol)
+		{
+			return Direction::Left;
+		}
+		else if (aFromCol == lastCol && aToCol == 0)
+		{
+			return Direction::Right;
+		}
+	}
+
 	return Direction::None;
 }
 

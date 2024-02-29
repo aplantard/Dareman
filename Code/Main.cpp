@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 			deltaTime = deltaTime + sleepMs;
 		}
 
-		gameEngine->GetGameUI()->SetFpsCount(deltaTime.count());
+		gameEngine->GetGameUI()->SetFpsCount(deltaTime.count() * 10);
 	}
 
 

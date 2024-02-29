@@ -21,7 +21,7 @@ void GameUI::Render(Renderer* aRenderer) const
 	Level* level = gameEngine->GetLevel();
 
 	char fpsLabel[32];
-	sprintf(fpsLabel, "%s %5.1f", mFpsLabel, (1000.f / mFpsCount));
+	sprintf(fpsLabel, "%s %5.1f", mFpsLabel, mFpsCount);
 
 	int fpsLabelWidth, fpsLabelHeight;
 	TTF_SizeText(openSansFont, fpsLabel, &fpsLabelWidth, &fpsLabelHeight);

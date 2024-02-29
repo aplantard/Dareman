@@ -45,12 +45,11 @@ enum class Character : char
 struct Tile
 {
 	Sprite* mSprite = nullptr;
+	Collision mCollision = Collision::None;
+	Pickup mPickup = Pickup::None;
 
 	int mCol = 0;
 	int mRow = 0;
-
-	Collision mCollision = Collision::None;
-	Pickup mPickup = Pickup::None;
 
 	bool operator==(const Tile& aOtherTile)
 	{ 

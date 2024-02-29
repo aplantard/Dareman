@@ -483,7 +483,7 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 		}
 
 	}
-}
+ }
 
 int Ghost::GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirectionFrom)
 {
