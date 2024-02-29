@@ -87,6 +87,7 @@ float GameActor::MoveToNextTile(float aDeltaTime)
 
 		float distanceToNextTile = nextTileX - mPosX;
 
+		// the distance can be lower than 0 because of the corridor. So I correct the distance 
 		if (distanceToNextTile < 0)
 		{
 			distanceToNextTile = (levelWidth - mPosX);
@@ -128,6 +129,7 @@ float GameActor::MoveToNextTile(float aDeltaTime)
 
 		float distanceToNextTile = mPosX - nextTileX;
 
+		// the distance can be lower than 0 because of the corridor. So I correct the distance 
 		if (distanceToNextTile < 0)
 		{
 			distanceToNextTile = (levelWidth - std::abs(distanceToNextTile));

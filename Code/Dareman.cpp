@@ -29,7 +29,7 @@ void Dareman::SetWantedDirection(Direction aNewDirection)
 	mWantedDirection = aNewDirection;
 }
 
-
+// Used to change sprite according to direction
 void Dareman::UpdateSprite()
 {
 	switch (mDirection)
@@ -41,6 +41,7 @@ void Dareman::UpdateSprite()
 	}
 }
 
+// It is use for animation when we stay in the same direction
 void Dareman::ToggleSprite() 
 {
 	SDL_Rect selection = mSpriteSheet->GetSelection();

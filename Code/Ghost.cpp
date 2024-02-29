@@ -79,6 +79,7 @@ void Ghost::ClearDirections()
 	mDirections.clear();
 }
 
+// calculate direction to move away from dareman.
 Direction Ghost::ComputeFleeingDirection()
 {
 	GameEngine* gameEngine = GameEngine::GetInstance();
@@ -116,6 +117,7 @@ Direction Ghost::ComputeFleeingDirection()
 	return dirToReturn;
 }
 
+// Calculate chasing target tile depending on which ghost is it.
 Tile Ghost::ComputeChasingTargetTile()
 {
 	GameEngine* gameEngine = GameEngine::GetInstance();
@@ -268,6 +270,7 @@ Tile Ghost::ComputeChasingTargetTile()
 	}
 }
 
+// Update state according to timers.
 void Ghost::UpdateState(std::chrono::duration<double, std::milli> aDeltaTime) 
 {
 	if ((mState == GhostState::Scatter || mState == GhostState::Chasing) && IsAllowedToLeaveGhostHouse())
@@ -325,6 +328,7 @@ bool Ghost::IsAllowedToLeaveGhostHouse()
 	}
 	case Character::Inky:
 	{
+		// Inky leaves the ghost house when dareman has eaten more than 30 pacdots
 		return level->GetTotalPickupCount() - level->GetPickupCount() >= 30;
 	}
 	case Character::Pinky:
@@ -333,6 +337,7 @@ bool Ghost::IsAllowedToLeaveGhostHouse()
 	}
 	case Character::Clyde:
 	{
+		//Clyde leave ghost house only we dareman has eaten a third of all pacdots.
 		int totalPickupCount = level->GetTotalPickupCount();
 		return totalPickupCount - level->GetPickupCount() >= totalPickupCount / 3;
 	}
@@ -375,7 +380,7 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 			Tile currentTile = level->GetTile(mPosX / TILE_SIZE, mPosY / TILE_SIZE);
 			int numberOfdirectionAvailable = GetNumberOfPathAvailableFromPos(currentTile.mCol, currentTile.mRow, mDirection);
 
-			//Compute Next direction
+			//Compute Next direction depending on state
 			{
 				if ((mState == GhostState::Chasing || mState == GhostState::Fleeing) && numberOfdirectionAvailable > 1)
 				{
@@ -471,6 +476,7 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 				mPreviousTile = currentTile;
 			}
 
+			// move to next tile from a tile or to max distance during deltaTime
 			if (mDirection != Direction::None && CanMove(mDirection))
 			{
 				remaining = MoveToNextTile(remaining);
@@ -479,12 +485,14 @@ void Ghost::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 		}
 		else
 		{
+			//Move to the next tile
 			remaining = MoveToNextTile(remaining);
 		}
 
 	}
  }
 
+// On an tile calculate how many direction available to move. It forbid to turn back
 int Ghost::GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirectionFrom)
 {
 	Level* level = GameEngine::GetInstance()->GetLevel();
@@ -512,6 +520,7 @@ int Ghost::GetNumberOfPathAvailableFromPos(int aCol, int aRow, Direction aDirect
 	return numberOfPathAvailable;
 }
 
+// Used to change sprite according to direction
 void Ghost::UpdateSprite() const
 {
 	if (mState == GhostState::Recovering)
@@ -547,6 +556,7 @@ void Ghost::UpdateSprite() const
 	}
 }
 
+// It is use for animation when we stay in the same direction
 void Ghost::ToggleSprite() const
 {
 	SDL_Rect selection = mSpriteSheet->GetSelection();

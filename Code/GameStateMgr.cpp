@@ -42,6 +42,8 @@ void GameStateMgr::Update(std::chrono::duration<double, std::milli> aDeltaTime)
 		{
 			break;
 		}
+
+		// a special state to animate dareman death.
 		case GameStateMgr::DaremanDeath:
 		{ 
 			Dareman* dareman = GameEngine::GetInstance()->GetDareman();

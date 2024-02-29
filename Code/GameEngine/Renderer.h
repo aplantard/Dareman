@@ -38,7 +38,7 @@ public:
 
 	void CreateDialog(const char* aTitle, const char* aText);
 	void CloseDialog();
-	inline bool ShouldPresentModal() { return mModals.size() > 0; };
+	inline bool ShouldPresentModal() { return mModals.empty() == false; };
 
 	void BeginFrame();
 	void EndFrame();

@@ -99,7 +99,6 @@ int main(int argc, char* argv[])
 		gameEngine->GetGameUI()->SetFpsCount(deltaTime.count() * 10);
 	}
 
-
 	bool isError = gameStateMgr->GetCurrentGameState() == GameStateMgr::GameState::Error;
 
 	ShutdownApp();

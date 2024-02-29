@@ -40,6 +40,9 @@ Level::Level()
 	: mWidth(0)
 	, mHeight(0)
 	, mPickupCount(0)
+	, mSmallPickupSprite(nullptr)
+	, mBigPickupSprite(nullptr)
+	, mTotalPickupCount(0)
 {
 }
 
@@ -114,7 +117,7 @@ void Level::LoadLevelFile(const char* aPath)
 	char tileId[3] = "00";
 	char delimiter;
 	mTiles.emplace_back();
-	while (fscanf(file, "%2c%c", &tileId, &delimiter) != EOF)
+	while (fscanf(file, "%s%c", &tileId, &delimiter) != EOF)
 	{
 		mTiles.back().emplace_back(Tile(mTileTemplates[tileId]));
 		mTiles.back().back().mCol = col;
@@ -155,28 +158,28 @@ void Level::LoadPickupFile(const char* aPath)
 	{
 		switch (pickupType)
 		{
-		case '1':
-			mPickupCount++;
-			mTiles[row][col].mPickup = Pickup::Small;
-			break;
-		case '2':
-			mPickupCount++;
-			mTiles[row][col].mPickup = Pickup::Big;
-			break;
-		case 'D':
-		{
-			dareman = new Dareman(col, row);
-			break;
-		}
-		case 'B':
-		case 'I':
-		case 'P':
-		case 'C': 
-		{
-			gameEngine->AddActor(new Ghost((Character)pickupType, col, row));
-
-		}
-		default: break;
+			case '1':
+				mPickupCount++;
+				mTiles[row][col].mPickup = Pickup::Small;
+				break;
+			case '2':
+				mPickupCount++;
+				mTiles[row][col].mPickup = Pickup::Big;
+				break;
+			case 'D':
+			{
+				dareman = new Dareman(col, row);
+				break;
+			}
+			case 'B':
+			case 'I':
+			case 'P':
+			case 'C': 
+			{
+				gameEngine->AddActor(new Ghost((Character)pickupType, col, row));
+				break;
+			}
+			default: break;
 		}
 
 		if (delimiter == '\n')
@@ -219,9 +222,9 @@ void Level::Render(Renderer* aRenderer) const
 			{
 				switch (tile.mPickup)
 				{
-				case Pickup::Small: aRenderer->DrawSprite(mSmallPickupSprite, col * TILE_SIZE, row * TILE_SIZE); break;
-				case Pickup::Big: aRenderer->DrawSprite(mBigPickupSprite, col * TILE_SIZE, row * TILE_SIZE); break;
-				default: break;
+					case Pickup::Small: aRenderer->DrawSprite(mSmallPickupSprite, col * TILE_SIZE, row * TILE_SIZE); break;
+					case Pickup::Big: aRenderer->DrawSprite(mBigPickupSprite, col * TILE_SIZE, row * TILE_SIZE); break;
+					default: break;
 				}
 			}
 		}
@@ -274,6 +277,7 @@ const Tile& Level::GetNextTile(int aCol, int aRow, Direction aDirection) const
 	}
 }
 
+// Not optimized, Would need to check how to use this better.
 const Tile& Level::GetClosestTileNonBlocking(int aCol, int aRow, Direction aDirection) const
 {
 	Tile startTile = GetTile(aCol, aRow);
@@ -330,7 +334,7 @@ const Tile& Level::GetClosestTileNonBlocking(int aCol, int aRow, Direction aDire
 
 	std::pair<Tile, Direction> currentTile = openList[0];
 
-	while (openList.empty() == false /* && openList.size() < (mTiles.size() * mTiles[0].size())*/)
+	while (openList.empty() == false && openList.size() < (mTiles.size() * mTiles[0].size()))
 	{
 		rightDirection = ClockWiseRotate(currentTile.second);
 		rightTile = GetNextTile(currentTile.first.mCol, currentTile.first.mRow, rightDirection);
@@ -530,6 +534,7 @@ Direction Level::GetDirectionToMove(int aFromCol, int aFromRow, int aToCol, int 
 		return Direction::Left;
 	}
 
+	// manage the corridor
 	int middleRow = ((GetHeightPx() / TILE_SIZE) / 2) - 1;
 	if ((aFromRow == middleRow && aToRow == middleRow))
 	{
